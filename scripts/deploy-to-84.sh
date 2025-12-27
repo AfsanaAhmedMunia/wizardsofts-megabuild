@@ -14,7 +14,7 @@ NC='\033[0m'
 DEPLOY_HOST="10.0.0.84"
 DEPLOY_USER="deploy"
 DEPLOY_PATH="/opt/wizardsofts-megabuild"
-COMPOSE_PROFILE="gibd-quant"
+COMPOSE_PROFILE="all"  # Deploy everything: shared, gibd-quant, and web-apps
 
 echo -e "${GREEN}========================================${NC}"
 echo -e "${GREEN}Deploying to 10.0.0.84${NC}"
@@ -98,10 +98,10 @@ echo -e "${YELLOW}Running health checks...${NC}"
 sleep 15
 
 # Check Eureka
-if curl -f -s http://$DEPLOY_HOST:8761/actuator/health > /dev/null 2>&1; then
-    echo -e "${GREEN}✓ Eureka (8761): UP${NC}"
+if curl -f -s http://$DEPLOY_HOST:8762/actuator/health > /dev/null 2>&1; then
+    echo -e "${GREEN}✓ Eureka (8762): UP${NC}"
 else
-    echo -e "${RED}✗ Eureka (8761): DOWN${NC}"
+    echo -e "${RED}✗ Eureka (8762): DOWN${NC}"
 fi
 
 # Check Gateway
@@ -139,11 +139,25 @@ else
     echo -e "${RED}✗ Agent Service (5004): DOWN${NC}"
 fi
 
-# Check Frontend
+# Check Quant-Flow Frontend
 if curl -f -s http://$DEPLOY_HOST:3001 > /dev/null 2>&1; then
-    echo -e "${GREEN}✓ Frontend (3001): UP${NC}"
+    echo -e "${GREEN}✓ Quant-Flow Frontend (3001): UP${NC}"
 else
-    echo -e "${RED}✗ Frontend (3001): DOWN${NC}"
+    echo -e "${RED}✗ Quant-Flow Frontend (3001): DOWN${NC}"
+fi
+
+# Check Wizardsofts Corporate Website
+if curl -f -s http://$DEPLOY_HOST:3000 > /dev/null 2>&1; then
+    echo -e "${GREEN}✓ Wizardsofts.com (3000): UP${NC}"
+else
+    echo -e "${RED}✗ Wizardsofts.com (3000): DOWN${NC}"
+fi
+
+# Check Daily Deen Guide
+if curl -f -s http://$DEPLOY_HOST:3002 > /dev/null 2>&1; then
+    echo -e "${GREEN}✓ Daily Deen Guide (3002): UP${NC}"
+else
+    echo -e "${RED}✗ Daily Deen Guide (3002): DOWN${NC}"
 fi
 
 echo ""
@@ -151,10 +165,20 @@ echo -e "${GREEN}========================================${NC}"
 echo -e "${GREEN}Deployment Complete!${NC}"
 echo -e "${GREEN}========================================${NC}"
 echo ""
-echo "Access your application at:"
-echo "  - Frontend: http://$DEPLOY_HOST:3001"
-echo "  - Eureka Dashboard: http://$DEPLOY_HOST:8761"
+echo "Access your applications at:"
+echo ""
+echo "Web Applications:"
+echo "  - Wizardsofts.com: http://$DEPLOY_HOST:3000"
+echo "  - Daily Deen Guide: http://$DEPLOY_HOST:3002"
+echo "  - Quant-Flow: http://$DEPLOY_HOST:3001"
+echo ""
+echo "Infrastructure Services:"
+echo "  - Eureka Dashboard: http://$DEPLOY_HOST:8762"
 echo "  - API Gateway: http://$DEPLOY_HOST:8080"
+echo "  - Signal Service: http://$DEPLOY_HOST:5001"
+echo "  - NLQ Service: http://$DEPLOY_HOST:5002"
+echo "  - Calibration Service: http://$DEPLOY_HOST:5003"
+echo "  - Agent Service: http://$DEPLOY_HOST:5004"
 echo ""
 echo "To view logs:"
 echo "  ssh $DEPLOY_USER@$DEPLOY_HOST 'cd $DEPLOY_PATH && docker compose logs -f'"
