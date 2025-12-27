@@ -33,41 +33,44 @@ export default function ComingSoonPage() {
       <GoogleAnalytics />
       <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
         {/* Hero Section */}
-        <section className="min-h-screen flex items-center justify-center px-4 py-12">
-          <div className="w-full flex flex-col lg:flex-row gap-8 max-w-6xl">
-            {/* Left Column - Main Content */}
-            <div className="flex-1 text-center lg:text-left">
-              {/* Coming Soon Badge - TOP & FLASHING */}
-              <div className="inline-block mb-6 px-6 py-2 bg-padma-red text-white rounded-full font-bold text-sm tracking-wide animate-flash">
-                Coming Soon!
-              </div>
+        <section className="min-h-screen flex flex-col items-center justify-center px-4 py-12 gap-12">
+          {/* Top Section - Centered Branding */}
+          <div className="w-full text-center">
+            {/* Coming Soon Badge - TOP & FLASHING */}
+            <div className="inline-block mb-6 px-6 py-2 bg-padma-red text-white rounded-full font-bold text-sm tracking-wide animate-flash">
+              Coming Soon!
+            </div>
 
-              {/* Main Heading - Script Font */}
-              <h1 className="font-script text-4xl md:text-6xl text-padma-red mb-1 leading-tight">
-                Padma Foods
-              </h1>
+            {/* Main Heading - Script Font */}
+            <h1 className="font-script text-4xl md:text-6xl text-padma-red mb-1 leading-tight">
+              Padma Foods
+            </h1>
 
-              {/* Since 1995 - Script Font Subtitle */}
-              <p className="font-script text-xl md:text-2xl text-padma-blue mb-4">
-                Since 1995
-              </p>
+            {/* Since 1995 - Script Font Subtitle */}
+            <p className="font-script text-xl md:text-2xl text-padma-blue mb-4">
+              Since 1995
+            </p>
 
-              {/* Quality Assured - Bold Sans-serif */}
-              <h2 className="font-sans text-xl md:text-2xl font-bold text-padma-blue mb-6 tracking-wide">
-                QUALITY ASSURED
-              </h2>
+            {/* Quality Assured - Bold Sans-serif */}
+            <h2 className="font-sans text-xl md:text-2xl font-bold text-padma-blue mb-6 tracking-wide">
+              QUALITY ASSURED
+            </h2>
+          </div>
 
-              {/* PRIMARY: Contact Section - NOW MOST PROMINENT */}
-              <div className="bg-gradient-to-br from-padma-red to-red-700 rounded-3xl p-8 md:p-12 shadow-2xl max-w-2xl mx-auto lg:mx-0 mb-8 border-4 border-padma-blue">
-                <h3 className="text-white text-3xl md:text-4xl font-bold mb-2">
+          {/* Bottom Section - Contact Box and Game Side by Side */}
+          <div className="w-full flex flex-col lg:flex-row gap-8 max-w-6xl items-center lg:items-start justify-center">
+            {/* Left - Contact Section */}
+            <div className="w-full lg:flex-1 flex justify-center">
+              <div className="bg-gradient-to-br from-padma-red to-red-700 rounded-3xl p-8 md:p-12 shadow-2xl max-w-2xl border-4 border-padma-blue">
+                <h3 className="text-white text-3xl md:text-4xl font-bold mb-2 text-center">
                   Get in Touch
                 </h3>
-                <p className="text-red-100 text-base mb-8 font-medium">
+                <p className="text-red-100 text-base mb-8 font-medium text-center">
                   Contact us to pre-order or inquire
                 </p>
 
                 {/* Phone Numbers - Large & Bold */}
-                <div className="flex flex-col md:flex-row gap-4 justify-center lg:justify-start mb-8">
+                <div className="flex flex-col md:flex-row gap-4 justify-center mb-8">
                   <a
                     href="tel:+8801713492481"
                     className="inline-flex items-center justify-center gap-3 px-6 py-4 bg-white text-padma-red rounded-2xl font-bold text-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-110 active:scale-95"
@@ -89,7 +92,7 @@ export default function ComingSoonPage() {
                 </div>
 
                 {/* Social Links */}
-                <div className="flex items-center justify-center lg:justify-start gap-4 pt-6 border-t-2 border-white/20">
+                <div className="flex items-center justify-center gap-4 pt-6 border-t-2 border-white/20">
                   <span className="text-white text-sm font-semibold">Follow Us:</span>
                   <a
                     href="https://www.facebook.com/padmafoods"
@@ -106,8 +109,8 @@ export default function ComingSoonPage() {
               </div>
             </div>
 
-            {/* Right Column - Snake Game (appears on right on lg+, moves to bottom on smaller) */}
-            <div className="w-full lg:w-96 flex flex-col justify-center items-center">
+            {/* Right - Snake Game */}
+            <div className="w-full lg:w-96 flex flex-col items-center">
               <h2 className="text-2xl md:text-3xl font-bold text-padma-red mb-6">While You Wait...</h2>
               <SnakeGame />
             </div>
