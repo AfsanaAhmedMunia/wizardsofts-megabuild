@@ -10,7 +10,7 @@ stages:
 variables:
   # Deployment server
   DEPLOY_HOST: "10.0.0.84"
-  DEPLOY_USER: "deploy"
+  DEPLOY_USER: "wizardsofts"
   DEPLOY_PATH: "/opt/wizardsofts-megabuild"
 
   # Docker Compose profile
