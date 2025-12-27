@@ -23,12 +23,14 @@ export function getActiveLinkFromPath(p?: string | null) {
   if (pathname === "/") return "home";
   if (pathname === "/about") return "about";
   if (pathname.startsWith("/services")) return "services";
+  if (pathname === "/bondwala") return "services";
   if (pathname === "/contact") return "contact";
   return "";
 }
 
 export default function Header() {
   const [open, setOpen] = useState(false);
+  const [openServicesMenu, setOpenServicesMenu] = useState(false);
   const [mounted, setMounted] = useState(false);
   const rawPathname = usePathname();
 
@@ -50,6 +52,8 @@ export default function Header() {
   };
 
   const pathname = mounted ? normalize(rawPathname) : null;
+  const isServicesActive = pathname?.startsWith("/services") || pathname === "/bondwala";
+
   return (
     <header className="bg-white shadow-sm">
       <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -94,22 +98,50 @@ export default function Header() {
               >
                 About
               </Link>
-              <Link
-                href="/services"
-                aria-current={mounted && pathname?.startsWith("/services") ? "page" : undefined}
-                className={
-                  mounted
-                    ? cx(
-                        "rounded-md px-3 py-2 text-sm font-medium",
-                        pathname?.startsWith("/services")
-                          ? "bg-primary text-white hover:bg-primary-600"
-                          : "text-gray-700 hover:bg-gray-100 hover:text-primary"
-                      )
-                    : "rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-primary"
-                }
-              >
-                Services
-              </Link>
+
+              {/* Products & Services Dropdown */}
+              <div className="relative group">
+                <button
+                  onMouseEnter={() => setOpenServicesMenu(true)}
+                  onMouseLeave={() => setOpenServicesMenu(false)}
+                  className={
+                    mounted
+                      ? cx(
+                          "rounded-md px-3 py-2 text-sm font-medium flex items-center gap-1",
+                          isServicesActive
+                            ? "bg-primary text-white hover:bg-primary-600"
+                            : "text-gray-700 hover:bg-gray-100 hover:text-primary"
+                        )
+                      : "rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-primary flex items-center gap-1"
+                  }
+                >
+                  Products & Services
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                  </svg>
+                </button>
+                {openServicesMenu && (
+                  <div
+                    onMouseEnter={() => setOpenServicesMenu(true)}
+                    onMouseLeave={() => setOpenServicesMenu(false)}
+                    className="absolute left-0 mt-0 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200"
+                  >
+                    <Link
+                      href="/services"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-primary"
+                    >
+                      All Services
+                    </Link>
+                    <Link
+                      href="/bondwala"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-primary"
+                    >
+                      BondWala
+                    </Link>
+                  </div>
+                )}
+              </div>
+
               <Link
                 href="/contact"
                 aria-current={mounted && pathname === "/contact" ? "page" : undefined}
@@ -225,7 +257,23 @@ export default function Header() {
               }
               onClick={() => setOpen(false)}
             >
-              Services
+              Products & Services
+            </Link>
+            <Link
+              href="/bondwala"
+              className={
+                mounted
+                  ? cx(
+                      "block rounded-md px-3 py-2 text-base font-medium pl-6",
+                      pathname === "/bondwala"
+                        ? "bg-primary text-white hover:bg-primary-600"
+                        : "text-gray-700 hover:bg-gray-100 hover:text-primary"
+                    )
+                  : "block rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-100 hover:text-primary pl-6"
+              }
+              onClick={() => setOpen(false)}
+            >
+              BondWala
             </Link>
             <Link
               href="/contact"
