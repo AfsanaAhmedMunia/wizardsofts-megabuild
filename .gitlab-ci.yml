@@ -357,36 +357,27 @@ deploy-web-apps:
   stage: deploy
   image: alpine:latest
   before_script:
-    - apk add --no-cache openssh-client rsync docker-cli
-    - mkdir -p ~/.ssh
-    - chmod 700 ~/.ssh
-    - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-    - chmod 600 ~/.ssh/id_rsa
-    - ssh-keyscan -H $DEPLOY_HOST >> ~/.ssh/known_hosts
+    - apk add --no-cache rsync
   script:
     - |
-      echo "Deploying web applications to $DEPLOY_HOST..."
+      echo "Deploying web applications locally on runner..."
 
       # Sync Traefik configuration
       echo "Syncing Traefik configuration..."
-      rsync -avz infrastructure/traefik/ $DEPLOY_USER@$DEPLOY_HOST:/home/wizardsofts/traefik/
+      mkdir -p /home/wizardsofts/traefik
+      cp -r infrastructure/traefik/* /home/wizardsofts/traefik/
 
       # Sync web app docker-compose configurations
       for service in ws-wizardsofts-web ws-daily-deen-web pf-padmafoods-web; do
         if [ -d "apps/$service" ]; then
           echo "Syncing $service..."
-          ssh $DEPLOY_USER@$DEPLOY_HOST "mkdir -p /home/wizardsofts/apps/$service"
-          rsync -avz --exclude 'node_modules' --exclude '.next' apps/$service/ $DEPLOY_USER@$DEPLOY_HOST:/home/wizardsofts/apps/$service/
+          mkdir -p /home/wizardsofts/apps/$service
+          rsync -av --exclude 'node_modules' --exclude '.next' apps/$service/ /home/wizardsofts/apps/$service/
         fi
       done
 
-      # Build and deploy web apps on server
-      ssh $DEPLOY_USER@$DEPLOY_HOST << 'WEBAPPS_DEPLOY'
-      set -e
-
-      SUDO_PASSWORD="29Dec2#24"
-
       # Restart Traefik to pick up config changes
+      echo "Restarting Traefik..."
       cd /home/wizardsofts/traefik
       snap run docker compose restart traefik || snap run docker compose up -d traefik
 
@@ -405,9 +396,6 @@ deploy-web-apps:
       done
 
       echo "Web apps deployment complete!"
-      WEBAPPS_DEPLOY
-
-      echo "Web apps deployed successfully!"
   dependencies:
     - build-images
   environment:
