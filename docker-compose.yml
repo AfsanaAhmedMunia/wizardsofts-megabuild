@@ -281,7 +281,7 @@ services:
     profiles: ["gibd-quant", "all"]
     container_name: gibd-quant-web
     ports:
-      - "3001:3000"
+      - "4002:3000"  # Temporary testing port
     environment:
       - NEXT_PUBLIC_API_URL=http://ws-gateway:8080
       - NEXT_PUBLIC_GA_MEASUREMENT_ID=${GA_MEASUREMENT_ID}
@@ -303,7 +303,7 @@ services:
     profiles: ["web-apps", "all"]
     container_name: ws-wizardsofts-web
     ports:
-      - "3000:3000"
+      - "4000:3000"  # Temporary testing port (avoid conflict with existing :3000)
     environment:
       - NODE_ENV=production
       - NEXT_TELEMETRY_DISABLED=1
@@ -328,7 +328,7 @@ services:
     profiles: ["web-apps", "all"]
     container_name: ws-daily-deen-web
     ports:
-      - "3002:3000"
+      - "4001:3000"  # Temporary testing port (avoid conflict with Grafana :3002)
     environment:
       - NODE_ENV=production
       - NEXT_TELEMETRY_DISABLED=1
