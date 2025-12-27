@@ -2,7 +2,7 @@
 
 **Date**: December 27, 2025
 **Server**: 10.0.0.84
-**Status**: ✅ Deployment Complete, ⏸️ Awaiting DNS Update
+**Status**: ✅ FULLY OPERATIONAL
 
 ---
 
@@ -25,15 +25,17 @@
 
 ---
 
-## ❌ Current Issue: DNS Mismatch
+## ✅ Production URLs Working
 
-### DNS Records (Current)
-```bash
-www.wizardsofts.com → 106.70.161.3  ❌ (points to different server)
-```
+### Live Sites
+- **https://www.wizardsofts.com** ✅ LIVE
+- **http://10.0.0.84:4000** ✅ (temporary direct access)
+- **http://10.0.0.84:4001** ✅ (daily deen temporary access)
 
-**Why www.wizardsofts.com returns 404:**
-DNS currently points to 106.70.161.3, not 10.0.0.84 where the new services are running.
+### Network Setup
+- Public IP: 106.70.161.3 (router forwards ports 80/443 → 10.0.0.84)
+- Traefik reverse proxy handling SSL and routing
+- Let's Encrypt SSL certificate auto-generated
 
 ### Required DNS Update
 ```dns
@@ -74,11 +76,11 @@ Use IP-based access on testing ports:
 - [x] Verified services working on temporary ports
 - [x] Stopped old wwwwizardsoftscom-web-1 service
 
-### Phase 3: DNS Update ⏸️
-- [ ] Update DNS A records to 10.0.0.84
-- [ ] Wait for DNS propagation (5-60 minutes)
-- [ ] Verify HTTPS access works
-- [ ] Confirm SSL certificates auto-generated
+### Phase 3: Production Live ✅
+- [x] www.wizardsofts.com working via HTTPS
+- [x] SSL certificates auto-generated
+- [x] HTTP→HTTPS redirect working
+- [ ] Configure dailydeenguide.com (DNS pointing needed)
 
 ### Phase 4: Cleanup (Optional)
 - [ ] Remove port mappings (4000, 4001) from docker-compose.yml
@@ -127,18 +129,12 @@ Use IP-based access on testing ports:
 
 ## Next Steps
 
-1. **Update DNS Records** to point domains to 10.0.0.84
-2. **Wait for DNS Propagation** (check with `dig www.wizardsofts.com`)
-3. **Verify HTTPS Access**:
-   ```bash
-   curl -I https://www.wizardsofts.com
-   curl -I https://dailydeenguide.com
-   ```
-4. **Confirm SSL Certificates**:
-   ```bash
-   ssh wizardsofts@10.0.0.84 "docker exec traefik ls -la /letsencrypt/"
-   ```
-5. **(Optional) Remove port mappings** after DNS working
+1. **Configure dailydeenguide.com** (if needed - check DNS A record)
+2. **Configure guardianinvestmentbd.com** for quant-flow (when ready)
+3. **(Optional) Remove port mappings** from docker-compose.yml:
+   - Change ports 4000, 4001 to `ports: []`
+   - Services only accessible via Traefik (enhanced security)
+4. **Deploy remaining services** (quant-flow, infrastructure) as needed
 
 ---
 
