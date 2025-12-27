@@ -311,9 +311,11 @@ services:
       - gibd-network
     labels:
       - "traefik.enable=true"
+      - "traefik.docker.network=microservices-overlay"
       - "traefik.http.routers.wizardsofts-web.rule=Host(`www.wizardsofts.com`)"
       - "traefik.http.routers.wizardsofts-web.entrypoints=websecure"
-      - "traefik.http.routers.wizardsofts-web.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.wizardsofts-web.tls=true"
+      - "traefik.http.routers.wizardsofts-web.tls.certresolver=myresolver"
       - "traefik.http.services.wizardsofts-web.loadbalancer.server.port=3000"
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
@@ -336,9 +338,11 @@ services:
       - gibd-network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.dailydeen-web.rule=Host(`dailydeenguide.wizardsofts.com`)"
+      - "traefik.docker.network=microservices-overlay"
+      - "traefik.http.routers.dailydeen-web.rule=Host(`dailydeenguide.com`) || Host(`www.dailydeenguide.com`)"
       - "traefik.http.routers.dailydeen-web.entrypoints=websecure"
-      - "traefik.http.routers.dailydeen-web.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.dailydeen-web.tls=true"
+      - "traefik.http.routers.dailydeen-web.tls.certresolver=myresolver"
       - "traefik.http.services.dailydeen-web.loadbalancer.server.port=3000"
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
