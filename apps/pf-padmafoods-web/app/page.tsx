@@ -49,13 +49,6 @@ export default function ComingSoonPage() {
               QUALITY ASSURED
             </h2>
 
-            {/* Main Message */}
-            <p className="text-base md:text-lg text-padma-dark mb-8 leading-relaxed max-w-2xl mx-auto">
-              Fresh, authentic Bangladeshi food products delivered to your door.
-              <br className="hidden md:block" />
-              Discover the taste of tradition with Padma Foods.
-            </p>
-
             {/* PRIMARY: Contact Section - NOW MOST PROMINENT */}
             <div className="bg-gradient-to-br from-padma-red to-red-700 rounded-3xl p-8 md:p-12 shadow-2xl max-w-2xl mx-auto mb-8 border-4 border-padma-blue">
               <h3 className="text-white text-3xl md:text-4xl font-bold mb-2">
