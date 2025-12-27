@@ -1,6 +1,5 @@
 'use client';
 
-import type { Metadata } from "next";
 import { useEffect } from "react";
 
 // Google Analytics Script
@@ -9,13 +8,11 @@ function GoogleAnalytics() {
     const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
     if (!gaId) return;
 
-    // Load Google Analytics script
     const script1 = document.createElement('script');
     script1.async = true;
     script1.src = `https://www.googletagmanager.com/gtag/js?id=${gaId}`;
     document.head.appendChild(script1);
 
-    // Initialize gtag
     const script2 = document.createElement('script');
     script2.innerHTML = `
       window.dataLayer = window.dataLayer || [];
@@ -33,75 +30,66 @@ export default function ComingSoonPage() {
   return (
     <>
       <GoogleAnalytics />
-      <div className="min-h-screen bg-red-600 flex items-center justify-center px-4 py-8">
-        <div className="text-center max-w-2xl mx-auto w-full">
-          {/* Logo */}
-          <div className="mb-8 md:mb-12">
-            {/* Circular Logo - Red background with orange circle */}
-            <div className="mx-auto mb-6 w-32 h-32 md:w-40 md:h-40 bg-orange-500 rounded-full flex items-center justify-center shadow-2xl relative">
-              {/* Curved accent */}
-              <div className="absolute inset-0 rounded-full border-4 border-blue-300/30"></div>
-              {/* Spoon icon */}
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-16 w-16 md:h-20 md:w-20 text-white"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={1.5}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 6v12m6-6H6"
-                />
-              </svg>
+      <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
+        {/* Hero Section */}
+        <section className="min-h-screen flex items-center justify-center px-4 py-12">
+          <div className="max-w-4xl w-full text-center">
+            {/* Logo Image */}
+            <div className="mb-6 md:mb-8 flex justify-center">
+              <img
+                src="/padmafoods-logo.svg"
+                alt="Padma Foods Logo"
+                className="h-40 md:h-48 w-auto drop-shadow-xl"
+              />
             </div>
 
-            {/* Brand Name */}
-            <h1 className="text-3xl md:text-5xl font-bold text-white mb-2">
+            {/* Main Heading - Script Font */}
+            <h1 className="font-script text-4xl md:text-6xl text-padma-red mb-1 leading-tight">
               Padma Foods
             </h1>
-            <p className="text-lg md:text-xl text-orange-100 font-medium">
-              Quality Assured • Authentic Taste
-            </p>
-          </div>
 
-          {/* Main Message */}
-          <div className="mb-10 md:mb-14">
-            <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
-              Coming Soon
+            {/* Since 1995 - Script Font Subtitle */}
+            <p className="font-script text-xl md:text-2xl text-padma-blue mb-4">
+              Since 1995
+            </p>
+
+            {/* Quality Assured - Bold Sans-serif */}
+            <h2 className="font-sans text-xl md:text-2xl font-bold text-padma-blue mb-6 tracking-wide">
+              QUALITY ASSURED
             </h2>
-            <p className="text-base md:text-lg text-orange-50 leading-relaxed">
+
+            {/* Main Message */}
+            <p className="text-base md:text-lg text-padma-dark mb-8 leading-relaxed max-w-2xl mx-auto">
               Fresh, authentic Bangladeshi food products delivered to your door.
-              Stay tuned for our official launch!
-            </p>
-          </div>
-
-          {/* Contact Section */}
-          <div className="bg-white/15 backdrop-blur-sm rounded-2xl p-6 md:p-8 border border-white/20 mb-8">
-            <p className="text-white font-semibold mb-6 text-sm md:text-base">
-              Get in touch with us:
+              <br className="hidden md:block" />
+              Discover the taste of tradition with Padma Foods.
             </p>
 
-            {/* Contact Grid */}
-            <div className="space-y-4">
-              {/* Phone Numbers */}
-              <div className="flex items-center justify-center gap-2 flex-wrap">
+            {/* PRIMARY: Contact Section - NOW MOST PROMINENT */}
+            <div className="bg-gradient-to-br from-padma-red to-red-700 rounded-3xl p-8 md:p-12 shadow-2xl max-w-2xl mx-auto mb-8 border-4 border-padma-blue">
+              <h3 className="text-white text-3xl md:text-4xl font-bold mb-2">
+                Get in Touch
+              </h3>
+              <p className="text-red-100 text-base mb-8 font-medium">
+                Contact us to pre-order or inquire
+              </p>
+
+              {/* Phone Numbers - Large & Bold */}
+              <div className="flex flex-col md:flex-row gap-4 justify-center mb-8">
                 <a
                   href="tel:+8801713492481"
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-white text-red-600 rounded-lg font-semibold hover:bg-orange-50 transition-colors text-sm md:text-base"
+                  className="inline-flex items-center justify-center gap-3 px-6 py-4 bg-white text-padma-red rounded-2xl font-bold text-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-110 active:scale-95"
                 >
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.893.953a15.13 15.13 0 006.917 6.917l.953-1.893a1 1 0 011.06-.54l4.435.74a1 1 0 01.836.986V17a2 2 0 01-2 2h-2.5a7.5 7.5 0 01-7.5-7.5V5a2 2 0 01-2-2z" />
                   </svg>
                   +880 1713-492481
                 </a>
                 <a
                   href="tel:+8801713492482"
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-white text-red-600 rounded-lg font-semibold hover:bg-orange-50 transition-colors text-sm md:text-base"
+                  className="inline-flex items-center justify-center gap-3 px-6 py-4 bg-white text-padma-red rounded-2xl font-bold text-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-110 active:scale-95"
                 >
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.893.953a15.13 15.13 0 006.917 6.917l.953-1.893a1 1 0 011.06-.54l4.435.74a1 1 0 01.836.986V17a2 2 0 01-2 2h-2.5a7.5 7.5 0 01-7.5-7.5V5a2 2 0 01-2-2z" />
                   </svg>
                   +880 1713-492482
@@ -109,27 +97,37 @@ export default function ComingSoonPage() {
               </div>
 
               {/* Social Links */}
-              <div className="flex items-center justify-center gap-3">
+              <div className="flex items-center justify-center gap-4 pt-6 border-t-2 border-white/20">
+                <span className="text-white text-sm font-semibold">Follow Us:</span>
                 <a
                   href="https://www.facebook.com/padmafoods"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center w-10 h-10 bg-white text-blue-600 rounded-full hover:bg-orange-50 transition-colors"
+                  className="inline-flex items-center justify-center w-14 h-14 bg-white text-padma-blue rounded-full hover:shadow-2xl transition-all duration-300 transform hover:scale-125 active:scale-90"
                   title="Visit our Facebook page"
                 >
-                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
                   </svg>
                 </a>
               </div>
             </div>
-          </div>
 
-          {/* Footer */}
-          <p className="text-white/70 text-xs md:text-sm">
+            {/* Coming Soon Badge - Secondary */}
+            <div className="inline-block mb-12 px-8 py-3 bg-padma-blue/10 border-2 border-padma-blue rounded-full">
+              <p className="text-padma-blue font-bold text-lg">
+                Coming Soon!
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Footer */}
+        <footer className="bg-padma-dark text-white text-center py-6">
+          <p className="text-sm">
             &copy; {new Date().getFullYear()} Padma Foods. All rights reserved.
           </p>
-        </div>
+        </footer>
       </div>
     </>
   );
