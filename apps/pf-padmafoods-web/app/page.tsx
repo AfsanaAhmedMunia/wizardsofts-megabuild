@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from "react";
+import SnakeGame from "@/components/SnakeGame";
 
 // Google Analytics Script
 function GoogleAnalytics() {
@@ -100,6 +101,12 @@ export default function ComingSoonPage() {
                   </svg>
                 </a>
               </div>
+            </div>
+
+            {/* Snake Game Section */}
+            <div className="mt-12 mb-12">
+              <h2 className="text-2xl md:text-3xl font-bold text-padma-red mb-6">While You Wait...</h2>
+              <SnakeGame />
             </div>
           </div>
         </section>
