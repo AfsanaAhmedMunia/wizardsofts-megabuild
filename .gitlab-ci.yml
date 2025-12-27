@@ -31,7 +31,9 @@ cache:
 
 detect-changes:
   stage: detect
-  image: alpine/git:latest
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache git
   script:
     - |
       # Get list of changed files
@@ -43,10 +45,10 @@ detect-changes:
         git diff --name-only $CI_COMMIT_BEFORE_SHA $CI_COMMIT_SHA > changed_files.txt
 
         # Extract unique service directories
-        cat changed_files.txt | grep "^apps/" | cut -d'/' -f2 | sort -u > changed_services.txt
+        awk '/^apps\// { split($0, a, "/"); print a[2] }' changed_files.txt | sort -u > changed_services.txt
 
         # If docker-compose.yml or .env changed, rebuild all
-        if grep -q "docker-compose.yml\|.env" changed_files.txt; then
+        if grep -q "docker-compose.yml\|\.env" changed_files.txt; then
           echo "all" > changed_services.txt
         fi
       fi
