@@ -60,6 +60,7 @@ detect-changes:
     expire_in: 1 hour
   only:
     - main
+    - master
     - develop
     - merge_requests
 
@@ -94,6 +95,7 @@ test-spring-boot:
     - detect-changes
   only:
     - main
+    - master
     - develop
     - merge_requests
 
@@ -127,6 +129,7 @@ test-python:
     - detect-changes
   only:
     - main
+    - master
     - develop
     - merge_requests
 
@@ -159,6 +162,7 @@ test-nextjs:
     - detect-changes
   only:
     - main
+    - master
     - develop
     - merge_requests
 
@@ -207,6 +211,7 @@ build-images:
     - detect-changes
   only:
     - main
+    - master
     - develop
 
 # ============================================================================
@@ -319,6 +324,7 @@ deploy-to-84:
   when: manual
   only:
     - main
+    - master
 
 # ============================================================================
 # ROLLBACK - Rollback to previous version
@@ -360,6 +366,7 @@ rollback:
   when: manual
   only:
     - main
+    - master
 
 # ============================================================================
 # HEALTH CHECK - Verify deployment health
@@ -414,3 +421,4 @@ health-check:
   when: on_success
   only:
     - main
+    - master
