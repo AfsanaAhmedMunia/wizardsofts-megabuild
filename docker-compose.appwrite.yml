@@ -44,7 +44,6 @@ services:
 
   appwrite:
     image: appwrite/appwrite:1.8.1
-    profiles: ["appwrite", "infrastructure", "all"]
     container_name: appwrite
     <<: *x-logging
     restart: unless-stopped
@@ -170,7 +169,6 @@ services:
 
   appwrite-worker-audits:
     image: appwrite/appwrite:1.8.1
-    profiles: ["appwrite", "infrastructure", "all"]
     container_name: appwrite-worker-audits
     <<: *x-logging
     entrypoint: worker-audits
@@ -210,7 +208,6 @@ services:
 
   appwrite-worker-webhooks:
     image: appwrite/appwrite:1.8.1
-    profiles: ["appwrite", "infrastructure", "all"]
     container_name: appwrite-worker-webhooks
     <<: *x-logging
     entrypoint: worker-webhooks
@@ -235,7 +232,6 @@ services:
 
   appwrite-worker-deletes:
     image: appwrite/appwrite:1.8.1
-    profiles: ["appwrite", "infrastructure", "all"]
     container_name: appwrite-worker-deletes
     <<: *x-logging
     entrypoint: worker-deletes
@@ -268,7 +264,6 @@ services:
 
   appwrite-worker-databases:
     image: appwrite/appwrite:1.8.1
-    profiles: ["appwrite", "infrastructure", "all"]
     container_name: appwrite-worker-databases
     <<: *x-logging
     entrypoint: worker-databases
@@ -293,7 +288,6 @@ services:
 
   appwrite-worker-builds:
     image: appwrite/appwrite:1.8.1
-    profiles: ["appwrite", "infrastructure", "all"]
     container_name: appwrite-worker-builds
     <<: *x-logging
     entrypoint: worker-builds
@@ -323,7 +317,6 @@ services:
 
   appwrite-worker-certificates:
     image: appwrite/appwrite:1.8.1
-    profiles: ["appwrite", "infrastructure", "all"]
     container_name: appwrite-worker-certificates
     <<: *x-logging
     entrypoint: worker-certificates
@@ -354,7 +347,6 @@ services:
 
   appwrite-worker-mails:
     image: appwrite/appwrite:1.8.1
-    profiles: ["appwrite", "infrastructure", "all"]
     container_name: appwrite-worker-mails
     <<: *x-logging
     entrypoint: worker-mails
@@ -390,7 +382,6 @@ services:
 
   appwrite-worker-messaging:
     image: appwrite/appwrite:1.8.1
-    profiles: ["appwrite", "infrastructure", "all"]
     container_name: appwrite-worker-messaging
     <<: *x-logging
     entrypoint: worker-messaging
@@ -434,7 +425,6 @@ services:
 
   appwrite-worker-migrations:
     image: appwrite/appwrite:1.8.1
-    profiles: ["appwrite", "infrastructure", "all"]
     container_name: appwrite-worker-migrations
     <<: *x-logging
     entrypoint: worker-migrations
@@ -459,7 +449,6 @@ services:
 
   appwrite-maintenance:
     image: appwrite/appwrite:1.8.1
-    profiles: ["appwrite", "infrastructure", "all"]
     container_name: appwrite-maintenance
     <<: *x-logging
     entrypoint: maintenance
@@ -490,7 +479,6 @@ services:
 
   appwrite-usage:
     image: appwrite/appwrite:1.8.1
-    profiles: ["appwrite", "infrastructure", "all"]
     container_name: appwrite-usage
     <<: *x-logging
     entrypoint: usage
@@ -516,7 +504,6 @@ services:
 
   appwrite-schedule:
     image: appwrite/appwrite:1.8.1
-    profiles: ["appwrite", "infrastructure", "all"]
     container_name: appwrite-schedule
     <<: *x-logging
     entrypoint: schedule
@@ -545,7 +532,6 @@ services:
 
   appwrite-realtime:
     image: appwrite/appwrite:1.8.1
-    profiles: ["appwrite", "infrastructure", "all"]
     container_name: appwrite-realtime
     <<: *x-logging
     entrypoint: realtime
@@ -583,7 +569,6 @@ services:
 
   appwrite-mariadb:
     image: mariadb:10.11
-    profiles: ["appwrite", "infrastructure", "all"]
     container_name: appwrite-mariadb
     <<: *x-logging
     restart: unless-stopped
@@ -639,7 +624,6 @@ services:
 
   appwrite-redis:
     image: redis:7-alpine
-    profiles: ["appwrite", "infrastructure", "all"]
     container_name: appwrite-redis
     <<: *x-logging
     restart: unless-stopped

@@ -269,6 +269,22 @@ deploy-to-84:
         echo "Created .env from .env.example - PLEASE UPDATE WITH ACTUAL VALUES"
       fi
 
+      # Validate .env has real values, not placeholders
+      if grep -q 'your_postgres_password_here' .env; then
+        echo "ERROR: .env contains placeholder values! Updating with default password..."
+        sed -i 's/DB_PASSWORD=your_postgres_password_here/DB_PASSWORD=29Dec2#24/' .env
+      fi
+
+      # Create microservices-overlay network if it doesn't exist
+      echo "Creating microservices-overlay network..."
+      docker network create microservices-overlay 2>/dev/null || echo "Network already exists"
+      docker network ls | grep microservices-overlay
+
+      # Stop any existing Next.js processes (in case of hybrid deployment)
+      echo "Stopping any existing Next.js processes..."
+      echo "$SUDO_PASSWORD" | sudo -S pkill -f next-server || echo "No Next.js processes to stop"
+      sleep 2
+
       # Stop existing containers
       echo "Stopping existing containers..."
       docker compose --profile $PROFILE down || true

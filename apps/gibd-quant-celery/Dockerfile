@@ -10,7 +10,7 @@ WORKDIR /app
 COPY pyproject.toml ./
 
 # Install dependencies
-RUN uv pip install --system -r pyproject.toml
+RUN uv pip install --system
 
 # Copy application code
 COPY src/ ./src/
