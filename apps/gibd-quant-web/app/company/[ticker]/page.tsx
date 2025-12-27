@@ -26,13 +26,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!details) {
     return {
-      title: `${ticker} Not Found - Quant-Flow`,
+      title: `${ticker} Not Found - Guardian Investment BD`,
       description: `Company ${ticker} not found in our database`,
     };
   }
 
   return {
-    title: `${details.company.company_name} (${ticker}) - Quant-Flow`,
+    title: `${details.company.company_name} (${ticker}) - Guardian Investment BD`,
     description: `View detailed analysis, trading signals, and charts for ${details.company.company_name} (${ticker}). Sector: ${details.company.sector}`,
     openGraph: {
       title: `${details.company.company_name} (${ticker})`,

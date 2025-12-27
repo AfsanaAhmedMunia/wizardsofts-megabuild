@@ -38,7 +38,7 @@ const openai = createOpenAI({
 /**
  * System prompt for DSE stock assistant
  */
-const SYSTEM_PROMPT = `You are a helpful DSE (Dhaka Stock Exchange) stock assistant for Quant-Flow.
+const SYSTEM_PROMPT = `You are a helpful DSE (Dhaka Stock Exchange) stock assistant for Guardian Investment BD.
 
 You help users with:
 - Stock queries (use NLQ system for data)

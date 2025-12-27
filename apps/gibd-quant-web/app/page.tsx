@@ -10,7 +10,7 @@ import {
 import { Badge, SignalBadge } from "@/components/ui/badge";
 
 /**
- * Home Page - The main landing page of Quant-Flow
+ * Home Page - The main landing page of Guardian Investment BD
  *
  * LEARNING MODULE 2:
  * -----------------

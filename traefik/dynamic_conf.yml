@@ -50,6 +50,17 @@ http:
       middlewares:
         - rate-limit
 
+    # My Padma Foods - Coming Soon
+    pf-padmafoods-web:
+      rule: Host(`mypadmafoods.com`) || Host(`www.mypadmafoods.com`)
+      service: pf-padmafoods-web
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - rate-limit
+
     # ========================================================================
     # IP-BASED ROUTING (for testing before DNS)
     # ========================================================================
@@ -83,6 +94,42 @@ http:
         - websecure
       middlewares:
         - strip-quant-prefix
+
+    # Padma Foods via IP
+    pf-padmafoods-web-ip:
+      rule: Host(`10.0.0.84`) && PathPrefix(`/padmafoods`)
+      service: pf-padmafoods-web
+      entryPoints:
+        - web
+        - websecure
+      middlewares:
+        - strip-padmafoods-prefix
+
+    # ========================================================================
+    # SHARED SERVICES - Appwrite BaaS Platform
+    # ========================================================================
+
+    # Appwrite - Self-hosted Backend-as-a-Service (BondWala, GIBD, etc.)
+    appwrite:
+      rule: Host(`appwrite.wizardsofts.com`) || Host(`appwrite.bondwala.com`)
+      service: appwrite
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - appwrite-rate-limit
+        - appwrite-cors
+        - appwrite-security-headers
+
+    # Appwrite Realtime (WebSocket) - Live Updates
+    appwrite-realtime:
+      rule: (Host(`appwrite.wizardsofts.com`) || Host(`appwrite.bondwala.com`)) && PathPrefix(`/v1/realtime`)
+      service: appwrite-realtime
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
 
     # ========================================================================
     # INFRASTRUCTURE SERVICES
@@ -122,6 +169,16 @@ http:
         - web
       priority: 1000
 
+    # HTTP Catch-all redirect to HTTPS (low priority fallback)
+    http-catchall:
+      rule: "HostRegexp(`{host:.+}`)"
+      entryPoints:
+        - web
+      middlewares:
+        - redirect-to-https
+      service: noop-service
+      priority: 1
+
   # ==========================================================================
   # MIDDLEWARES
   # ==========================================================================
@@ -145,6 +202,12 @@ http:
         average: 100
         burst: 50
 
+    # Redirect HTTP to HTTPS
+    redirect-to-https:
+      redirectScheme:
+        scheme: https
+        permanent: true
+
     # Path prefix stripping for IP-based access
     strip-wizardsofts-prefix:
       stripPrefix:
@@ -160,6 +223,60 @@ http:
       stripPrefix:
         prefixes:
           - "/quant"
+
+    strip-padmafoods-prefix:
+      stripPrefix:
+        prefixes:
+          - "/padmafoods"
+
+    # Appwrite Rate Limiting (60 req/min per IP)
+    appwrite-rate-limit:
+      rateLimit:
+        average: 60
+        burst: 100
+        period: 1m
+
+    # Appwrite CORS for Mobile Apps and Web
+    appwrite-cors:
+      headers:
+        accessControlAllowMethods:
+          - GET
+          - POST
+          - PUT
+          - PATCH
+          - DELETE
+          - OPTIONS
+        accessControlAllowHeaders:
+          - Content-Type
+          - X-Appwrite-Project
+          - X-Appwrite-Key
+          - X-Appwrite-Response-Format
+          - X-Appwrite-Locale
+          - Authorization
+        accessControlAllowOriginList:
+          - "https://wizardsofts.com"
+          - "https://*.wizardsofts.com"
+          - "https://bondwala.com"
+          - "https://*.bondwala.com"
+          - "https://guardianinvestmentbd.com"
+          - "https://*.guardianinvestmentbd.com"
+          - "https://dailydeenguide.com"
+          - "https://*.dailydeenguide.com"
+        accessControlMaxAge: 86400
+        addVaryHeader: true
+
+    # Security Headers for Appwrite
+    appwrite-security-headers:
+      headers:
+        customResponseHeaders:
+          X-Content-Type-Options: "nosniff"
+          X-Frame-Options: "SAMEORIGIN"
+          X-XSS-Protection: "1; mode=block"
+          Strict-Transport-Security: "max-age=31536000; includeSubDomains; preload"
+          Referrer-Policy: "strict-origin-when-cross-origin"
+          Permissions-Policy: "geolocation=(), microphone=(), camera=()"
+        customRequestHeaders:
+          X-Forwarded-Proto: "https"
 
   # ==========================================================================
   # SERVICES
@@ -182,6 +299,11 @@ http:
         servers:
           - url: "http://gibd-quant-web:3000"
 
+    pf-padmafoods-web:
+      loadBalancer:
+        servers:
+          - url: "http://pf-padmafoods-web:3000"
+
     # Infrastructure Services
     api-gateway:
       loadBalancer:
@@ -193,11 +315,28 @@ http:
         servers:
           - url: "http://ws-discovery:8761"
 
-    # Mailcow
+    # Mailcow (using internal ports when behind Traefik reverse proxy)
     mailcow-http:
       loadBalancer:
         servers:
-          - url: "http://nginx-mailcow:80"
+          - url: "http://nginx-mailcow:10080"
+
+    # Noop service for HTTP catchall redirect
+    noop-service:
+      loadBalancer:
+        servers:
+          - url: "http://127.0.0.1"
+
+    # BondWala Services
+    appwrite:
+      loadBalancer:
+        servers:
+          - url: "http://appwrite:80"
+
+    appwrite-realtime:
+      loadBalancer:
+        servers:
+          - url: "http://appwrite-realtime:80"
 
 # ============================================================================
 # TCP ROUTERS (for TLS passthrough)
@@ -218,4 +357,4 @@ tcp:
     mailcow-https:
       loadBalancer:
         servers:
-          - address: "nginx-mailcow:443"
+          - address: "nginx-mailcow:10443"

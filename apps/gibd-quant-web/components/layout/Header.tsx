@@ -41,7 +41,7 @@ export function Header() {
           className="flex items-center gap-2 flex-shrink-0"
           onClick={() => handleNavClick('Home', '/')}
         >
-          <span className="text-base font-bold text-gray-900">Quant-Flow</span>
+          <span className="text-base font-bold text-gray-900">Guardian Investment BD</span>
           <span className="rounded bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-600">DSE</span>
         </Link>
 

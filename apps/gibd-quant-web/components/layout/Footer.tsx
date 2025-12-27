@@ -23,7 +23,7 @@ export function Footer() {
         <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-gray-600">
           {/* Disclaimer */}
           <div className="flex items-center gap-2">
-            <span>© {new Date().getFullYear()} Quant-Flow</span>
+            <span>© {new Date().getFullYear()} Guardian Investment BD</span>
             <span className="hidden sm:inline">•</span>
             <span className="text-center sm:text-left">
               Not financial advice. For educational purposes only.

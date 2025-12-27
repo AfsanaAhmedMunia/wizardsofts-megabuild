@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Enable standalone output for Docker deployment
+  output: 'standalone',
+
   // API proxy: Routes /api/* requests to FastAPI backend
   // This avoids CORS issues during development
   async rewrites() {

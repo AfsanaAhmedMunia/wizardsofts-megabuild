@@ -28,7 +28,7 @@ import { ClickTracker } from "@/components/analytics/ClickTracker";
  */
 
 export const metadata: Metadata = {
-  title: "Quant-Flow | DSE Trading Signals",
+  title: "Guardian Investment BD | DSE Trading Signals",
   description:
     "Quantitative trading signal analysis for Dhaka Stock Exchange (DSE)",
 };
