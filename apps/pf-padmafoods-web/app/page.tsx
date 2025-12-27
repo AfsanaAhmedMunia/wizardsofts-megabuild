@@ -34,15 +34,6 @@ export default function ComingSoonPage() {
         {/* Hero Section */}
         <section className="min-h-screen flex items-center justify-center px-4 py-12">
           <div className="max-w-4xl w-full text-center">
-            {/* Logo Image */}
-            <div className="mb-6 md:mb-8 flex justify-center">
-              <img
-                src="/padmafoods-logo.svg"
-                alt="Padma Foods Logo"
-                className="h-40 md:h-48 w-auto drop-shadow-xl"
-              />
-            </div>
-
             {/* Main Heading - Script Font */}
             <h1 className="font-script text-4xl md:text-6xl text-padma-red mb-1 leading-tight">
               Padma Foods
