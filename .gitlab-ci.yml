@@ -389,7 +389,7 @@ deploy-web-apps:
       # Restart Traefik to pick up config changes
       echo "Restarting Traefik..."
       cd /home/wizardsofts/traefik
-      docker compose restart traefik || docker compose up -d traefik
+      docker-compose restart traefik || docker-compose up -d traefik
 
       # Deploy each web app
       for service in ws-wizardsofts-web ws-daily-deen-web pf-padmafoods-web gibd-quant-web; do
@@ -397,11 +397,14 @@ deploy-web-apps:
           echo "Deploying $service..."
           cd /home/wizardsofts/apps/$service
 
-          # Build image
-          docker compose build
+          # Remove old container if exists
+          docker-compose down 2>/dev/null || true
 
-          # Restart container
-          docker compose up -d
+          # Build image
+          docker-compose build
+
+          # Start container
+          docker-compose up -d
 
           # Return to base directory
           cd /home/wizardsofts/apps
