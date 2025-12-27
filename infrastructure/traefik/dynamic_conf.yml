@@ -1,0 +1,49 @@
+http:
+  routers:
+    dashboard:
+      rule: Host(`traefik.localhost`) || Host(`10.0.0.84`)
+      service: api@internal
+      entryPoints:
+        - websecure
+      tls: {}
+      middlewares:
+        - dashboard-auth
+
+  middlewares:
+    dashboard-auth:
+      basicAuth:
+        users:
+          - "admin:$apr1$2I40dvBH$UxIJnwsA1a5PAJjGzV2Fd1"
+
+    # Mailcow ACME Challenge Router (HTTP)
+    # Routes Let's Encrypt validation requests to Mailcow's internal HTTP port
+    mailcow-acme:
+      rule: PathPrefix(`/.well-known/acme-challenge/`)
+      service: mailcow-http
+      entryPoints:
+        - web
+      priority: 1000
+
+  services:
+    mailcow-http:
+      loadBalancer:
+        servers:
+          - url: "http://nginx-mailcow:80"
+
+tcp:
+  routers:
+    # Mailcow UI Router (HTTPS)
+    # Passes encrypted traffic directly to Mailcow on internal HTTPS port
+    mailcow-ui:
+      rule: HostSNI(`mail.wizardsofts.com`) || HostSNI(`mail.dailydeenguide.com`)
+      service: mailcow-https
+      entryPoints:
+        - websecure
+      tls:
+        passthrough: true
+
+  services:
+    mailcow-https:
+      loadBalancer:
+        servers:
+          - address: "nginx-mailcow:443"

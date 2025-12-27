@@ -1,0 +1,350 @@
+version: '3.8'
+
+networks:
+  gibd-network:
+    driver: bridge
+
+services:
+  # ========================================================================
+  # INFRASTRUCTURE (shared profile)
+  # ========================================================================
+
+  postgres:
+    image: postgres:15-alpine
+    profiles: ["shared", "gibd-quant", "all"]
+    environment:
+      - POSTGRES_USER=gibd
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - gibd-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gibd"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    profiles: ["shared", "gibd-quant", "all"]
+    ports:
+      - "6379:6379"
+    networks:
+      - gibd-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ========================================================================
+  # SPRING CLOUD INFRASTRUCTURE (shared profile)
+  # ========================================================================
+
+  ws-discovery:
+    build:
+      context: ./apps/ws-discovery
+      dockerfile: Dockerfile
+    profiles: ["shared", "gibd-quant", "all"]
+    container_name: ws-discovery
+    ports:
+      - "8762:8761"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    networks:
+      - gibd-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8761/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  ws-gateway:
+    build:
+      context: ./apps/ws-gateway
+      dockerfile: Dockerfile
+    profiles: ["shared", "gibd-quant", "all"]
+    container_name: ws-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://ws-discovery:8761/eureka/
+    depends_on:
+      ws-discovery:
+        condition: service_healthy
+    networks:
+      - gibd-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # ========================================================================
+  # SHARED SPRING BOOT DATA SERVICES (shared profile)
+  # ========================================================================
+
+  ws-trades:
+    build:
+      context: ./apps/ws-trades
+      dockerfile: Dockerfile
+    profiles: ["shared", "gibd-quant", "all"]
+    container_name: ws-trades
+    ports:
+      - "8182:8182"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/ws_gibd_dse_daily_trades
+      - SPRING_DATASOURCE_USERNAME=gibd
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://ws-discovery:8761/eureka/
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ws-discovery:
+        condition: service_healthy
+    networks:
+      - gibd-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8182/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  ws-company:
+    build:
+      context: ./apps/ws-company
+      dockerfile: Dockerfile
+    profiles: ["shared", "gibd-quant", "all"]
+    container_name: ws-company
+    ports:
+      - "8183:8183"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/ws_gibd_dse_company_info
+      - SPRING_DATASOURCE_USERNAME=gibd
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://ws-discovery:8761/eureka/
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ws-discovery:
+        condition: service_healthy
+    networks:
+      - gibd-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8183/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  ws-news:
+    build:
+      context: ./apps/ws-news
+      dockerfile: Dockerfile
+    profiles: ["shared", "gibd-quant", "all"]
+    container_name: ws-news
+    ports:
+      - "8184:8184"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://ws-discovery:8761/eureka/
+    depends_on:
+      ws-discovery:
+        condition: service_healthy
+    networks:
+      - gibd-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8184/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # ========================================================================
+  # GIBD QUANT-FLOW PYTHON ML SERVICES (gibd-quant profile)
+  # ========================================================================
+
+  gibd-quant-signal:
+    build:
+      context: ./apps/gibd-quant-signal
+      dockerfile: Dockerfile
+    profiles: ["gibd-quant", "all"]
+    container_name: gibd-quant-signal
+    ports:
+      - "5001:5001"
+    environment:
+      - DATABASE_URL=postgresql://gibd:${DB_PASSWORD}@postgres:5432/ws_gibd_dse_daily_trades
+      - EUREKA_SERVER=http://ws-discovery:8761/eureka/
+      - APP_NAME=gibd-quant-signal
+      - APP_PORT=5001
+      - APP_HOST=gibd-quant-signal
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ws-discovery:
+        condition: service_healthy
+    networks:
+      - gibd-network
+
+  gibd-quant-nlq:
+    build:
+      context: ./apps/gibd-quant-nlq
+      dockerfile: Dockerfile
+    profiles: ["gibd-quant", "all"]
+    container_name: gibd-quant-nlq
+    ports:
+      - "5002:5002"
+    environment:
+      - DATABASE_URL=postgresql://gibd:${DB_PASSWORD}@postgres:5432/ws_gibd_dse_daily_trades
+      - EUREKA_SERVER=http://ws-discovery:8761/eureka/
+      - APP_NAME=gibd-quant-nlq
+      - APP_PORT=5002
+      - APP_HOST=gibd-quant-nlq
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ws-discovery:
+        condition: service_healthy
+    networks:
+      - gibd-network
+
+  gibd-quant-calibration:
+    build:
+      context: ./apps/gibd-quant-calibration
+      dockerfile: Dockerfile
+    profiles: ["gibd-quant", "all"]
+    container_name: gibd-quant-calibration
+    ports:
+      - "5003:5003"
+    environment:
+      - DATABASE_URL=postgresql://gibd:${DB_PASSWORD}@postgres:5432/ws_gibd_dse_daily_trades
+      - EUREKA_SERVER=http://ws-discovery:8761/eureka/
+      - APP_NAME=gibd-quant-calibration
+      - APP_PORT=5003
+      - APP_HOST=gibd-quant-calibration
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ws-discovery:
+        condition: service_healthy
+    networks:
+      - gibd-network
+
+  gibd-quant-agent:
+    build:
+      context: ./apps/gibd-quant-agent
+      dockerfile: Dockerfile
+    profiles: ["gibd-quant", "all"]
+    container_name: gibd-quant-agent
+    ports:
+      - "5004:5004"
+    environment:
+      - EUREKA_SERVER=http://ws-discovery:8761/eureka/
+      - APP_NAME=gibd-quant-agent
+      - APP_PORT=5004
+      - APP_HOST=gibd-quant-agent
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    depends_on:
+      ws-discovery:
+        condition: service_healthy
+    networks:
+      - gibd-network
+
+  gibd-quant-celery:
+    build:
+      context: ./apps/gibd-quant-celery
+      dockerfile: Dockerfile
+    profiles: ["gibd-quant", "all"]
+    container_name: gibd-quant-celery
+    command: celery -A src.celery_app worker --loglevel=info
+    environment:
+      - DATABASE_URL=postgresql://gibd:${DB_PASSWORD}@postgres:5432/ws_gibd_dse_daily_trades
+      - REDIS_URL=redis://redis:6379/0
+      - GATEWAY_URL=http://ws-gateway:8080
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+      - gibd-network
+
+  gibd-quant-web:
+    build:
+      context: ./apps/gibd-quant-web
+      dockerfile: Dockerfile
+    profiles: ["gibd-quant", "all"]
+    container_name: gibd-quant-web
+    ports:
+      - "3001:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://ws-gateway:8080
+      - NEXT_PUBLIC_GA_MEASUREMENT_ID=${GA_MEASUREMENT_ID}
+      - NEXT_PUBLIC_ADSENSE_CLIENT_ID=${ADSENSE_CLIENT_ID}
+    depends_on:
+      ws-gateway:
+        condition: service_healthy
+    networks:
+      - gibd-network
+
+  # ========================================================================
+  # WEB APPLICATIONS (web-apps profile)
+  # ========================================================================
+
+  ws-wizardsofts-web:
+    build:
+      context: ./apps/ws-wizardsofts-web
+      dockerfile: Dockerfile
+    profiles: ["web-apps", "all"]
+    container_name: ws-wizardsofts-web
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_TELEMETRY_DISABLED=1
+    networks:
+      - gibd-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.wizardsofts-web.rule=Host(`www.wizardsofts.com`)"
+      - "traefik.http.routers.wizardsofts-web.entrypoints=websecure"
+      - "traefik.http.routers.wizardsofts-web.tls.certresolver=letsencrypt"
+      - "traefik.http.services.wizardsofts-web.loadbalancer.server.port=3000"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  ws-daily-deen-web:
+    build:
+      context: ./apps/ws-daily-deen-web
+      dockerfile: Dockerfile
+    profiles: ["web-apps", "all"]
+    container_name: ws-daily-deen-web
+    ports:
+      - "3002:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_TELEMETRY_DISABLED=1
+    networks:
+      - gibd-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dailydeen-web.rule=Host(`dailydeenguide.wizardsofts.com`)"
+      - "traefik.http.routers.dailydeen-web.entrypoints=websecure"
+      - "traefik.http.routers.dailydeen-web.tls.certresolver=letsencrypt"
+      - "traefik.http.services.dailydeen-web.loadbalancer.server.port=3000"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+volumes:
+  postgres-data:

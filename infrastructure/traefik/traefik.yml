@@ -1,0 +1,26 @@
+api:
+  dashboard: true
+  insecure: false
+
+entryPoints:
+  web:
+    address: ":80"
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+  websecure:
+    address: ":443"
+
+providers:
+  docker:
+    swarmMode: false
+    exposedByDefault: false
+    network: microservices-overlay
+  file:
+    filename: /etc/traefik/dynamic_conf.yml
+    watch: true
+
+log:
+  level: INFO

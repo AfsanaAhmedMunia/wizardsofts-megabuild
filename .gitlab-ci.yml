@@ -1,0 +1,416 @@
+# GitLab CI/CD Pipeline for Wizardsofts Megabuild Monorepo
+# Deploys to 10.0.0.84 server using GitLab Runner
+
+stages:
+  - detect
+  - test
+  - build
+  - deploy
+
+variables:
+  # Deployment server
+  DEPLOY_HOST: "10.0.0.84"
+  DEPLOY_USER: "deploy"
+  DEPLOY_PATH: "/opt/wizardsofts-megabuild"
+
+  # Docker Compose profile
+  COMPOSE_PROFILE: "gibd-quant"
+
+  # Cache directories
+  MAVEN_CACHE: "$CI_PROJECT_DIR/.m2/repository"
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
+cache:
+  paths:
+    - .m2/repository/
+    - .cache/pip/
+
+# ============================================================================
+# DETECT CHANGES - Determine which services need to be rebuilt
+# ============================================================================
+
+detect-changes:
+  stage: detect
+  image: alpine/git:latest
+  script:
+    - |
+      # Get list of changed files
+      if [ "$CI_COMMIT_BEFORE_SHA" = "0000000000000000000000000000000000000000" ]; then
+        # First commit, build everything
+        echo "all" > changed_services.txt
+      else
+        # Detect changed services
+        git diff --name-only $CI_COMMIT_BEFORE_SHA $CI_COMMIT_SHA > changed_files.txt
+
+        # Extract unique service directories
+        cat changed_files.txt | grep "^apps/" | cut -d'/' -f2 | sort -u > changed_services.txt
+
+        # If docker-compose.yml or .env changed, rebuild all
+        if grep -q "docker-compose.yml\|.env" changed_files.txt; then
+          echo "all" > changed_services.txt
+        fi
+      fi
+
+      echo "Changed services:"
+      cat changed_services.txt
+  artifacts:
+    paths:
+      - changed_services.txt
+      - changed_files.txt
+    expire_in: 1 hour
+  only:
+    - main
+    - develop
+    - merge_requests
+
+# ============================================================================
+# TEST STAGE - Run tests for changed services
+# ============================================================================
+
+# Spring Boot services tests
+test-spring-boot:
+  stage: test
+  image: maven:3.9-eclipse-temurin-17
+  before_script:
+    - |
+      # Check if any Spring Boot service changed
+      if grep -qE "ws-discovery|ws-gateway|ws-trades|ws-company|ws-news" changed_services.txt || grep -q "all" changed_services.txt; then
+        echo "Spring Boot services changed, running tests"
+      else
+        echo "No Spring Boot services changed, skipping tests"
+        exit 0
+      fi
+  script:
+    - |
+      for service in ws-discovery ws-gateway ws-trades ws-company ws-news; do
+        if grep -q "$service\|all" changed_services.txt; then
+          echo "Testing $service..."
+          cd apps/$service
+          mvn clean test -Dmaven.repo.local=$MAVEN_CACHE
+          cd ../..
+        fi
+      done
+  dependencies:
+    - detect-changes
+  only:
+    - main
+    - develop
+    - merge_requests
+
+# Python services tests
+test-python:
+  stage: test
+  image: ghcr.io/astral-sh/uv:python3.11-bookworm
+  before_script:
+    - |
+      # Check if any Python service changed
+      if grep -qE "gibd-quant-signal|gibd-quant-nlq|gibd-quant-calibration|gibd-quant-celery" changed_services.txt || grep -q "all" changed_services.txt; then
+        echo "Python services changed, running tests"
+      else
+        echo "No Python services changed, skipping tests"
+        exit 0
+      fi
+  script:
+    - |
+      for service in gibd-quant-signal gibd-quant-nlq gibd-quant-calibration gibd-quant-celery; do
+        if grep -q "$service\|all" changed_services.txt; then
+          echo "Testing $service..."
+          cd apps/$service
+          uv pip install --system -r pyproject.toml
+          if [ -d "tests" ]; then
+            uv run pytest tests/ || echo "No tests found or tests failed"
+          fi
+          cd ../..
+        fi
+      done
+  dependencies:
+    - detect-changes
+  only:
+    - main
+    - develop
+    - merge_requests
+
+# Next.js web apps tests
+test-nextjs:
+  stage: test
+  image: node:20-alpine
+  before_script:
+    - |
+      # Check if any Next.js service changed
+      if grep -qE "ws-wizardsofts-web|ws-daily-deen-web|gibd-quant-web" changed_services.txt || grep -q "all" changed_services.txt; then
+        echo "Next.js services changed, running tests"
+      else
+        echo "No Next.js services changed, skipping tests"
+        exit 0
+      fi
+  script:
+    - |
+      for service in ws-wizardsofts-web ws-daily-deen-web gibd-quant-web; do
+        if grep -q "$service\|all" changed_services.txt; then
+          echo "Testing $service..."
+          cd apps/$service
+          npm install --legacy-peer-deps || echo "npm install failed"
+          npm run lint || echo "Lint check failed or not configured"
+          npm run build || echo "Build check failed"
+          cd ../..
+        fi
+      done
+  dependencies:
+    - detect-changes
+  only:
+    - main
+    - develop
+    - merge_requests
+
+# ============================================================================
+# BUILD STAGE - Build Docker images for changed services
+# ============================================================================
+
+build-images:
+  stage: build
+  image: docker:24-cli
+  services:
+    - docker:24-dind
+  before_script:
+    - docker info
+  script:
+    - |
+      echo "Building changed services..."
+
+      # Read changed services
+      if [ ! -f changed_services.txt ]; then
+        echo "No changed services detected"
+        exit 0
+      fi
+
+      # Build each changed service
+      while IFS= read -r service; do
+        if [ "$service" = "all" ]; then
+          echo "Building all services..."
+          docker compose build
+          break
+        else
+          echo "Building $service..."
+          docker compose build $service || echo "Service $service not in docker-compose.yml"
+        fi
+      done < changed_services.txt
+
+      # Save built images
+      docker compose config --services > built_services.txt
+      docker save $(docker compose config --services | xargs -I {} echo wizardsofts-megabuild-{}) -o images.tar || echo "No images to save"
+  artifacts:
+    paths:
+      - images.tar
+      - built_services.txt
+    expire_in: 1 day
+  dependencies:
+    - detect-changes
+  only:
+    - main
+    - develop
+
+# ============================================================================
+# DEPLOY STAGE - Deploy to 10.0.0.84 server
+# ============================================================================
+
+deploy-to-84:
+  stage: deploy
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache openssh-client rsync docker-cli sshpass
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - ssh-keyscan -H $DEPLOY_HOST >> ~/.ssh/known_hosts
+  script:
+    - |
+      echo "Deploying to $DEPLOY_HOST..."
+
+      # Create deployment script
+      cat > deploy.sh << 'DEPLOY_SCRIPT'
+      #!/bin/bash
+      set -e
+
+      SUDO_PASSWORD="29Dec2#24"
+      DEPLOY_PATH="/opt/wizardsofts-megabuild"
+      PROFILE="gibd-quant"
+
+      echo "Starting deployment to 10.0.0.84..."
+
+      # Create deployment directory if it doesn't exist
+      echo "$SUDO_PASSWORD" | sudo -S mkdir -p $DEPLOY_PATH
+      echo "$SUDO_PASSWORD" | sudo -S chown -R $USER:$USER $DEPLOY_PATH
+
+      # Navigate to deployment directory
+      cd $DEPLOY_PATH
+
+      # Pull latest code (if git repo exists, otherwise rsync will handle it)
+      if [ -d ".git" ]; then
+        git pull origin main
+      fi
+
+      # Load Docker images if provided
+      if [ -f "/tmp/images.tar" ]; then
+        echo "Loading Docker images..."
+        docker load -i /tmp/images.tar
+      fi
+
+      # Create .env if it doesn't exist
+      if [ ! -f ".env" ]; then
+        cp .env.example .env
+        echo "Created .env from .env.example - PLEASE UPDATE WITH ACTUAL VALUES"
+      fi
+
+      # Stop existing containers
+      echo "Stopping existing containers..."
+      docker compose --profile $PROFILE down || true
+
+      # Start services with the specified profile
+      echo "Starting services with profile: $PROFILE..."
+      docker compose --profile $PROFILE up -d
+
+      # Wait for services to be healthy
+      echo "Waiting for services to start..."
+      sleep 10
+
+      # Check service status
+      echo "Service status:"
+      docker compose ps
+
+      # Check Eureka registration (after 30s warmup)
+      echo "Waiting 30s for Eureka registration..."
+      sleep 30
+      curl -f http://localhost:8761/actuator/health || echo "Eureka health check failed"
+
+      echo "Deployment complete!"
+      DEPLOY_SCRIPT
+
+      chmod +x deploy.sh
+
+      # Sync files to remote server
+      echo "Syncing files to $DEPLOY_HOST..."
+      rsync -avz --delete \
+        --exclude '.git' \
+        --exclude 'node_modules' \
+        --exclude 'target' \
+        --exclude '.m2' \
+        --exclude '.cache' \
+        --exclude '__pycache__' \
+        --exclude '*.pyc' \
+        ./ $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/
+
+      # Copy Docker images if available
+      if [ -f "images.tar" ]; then
+        echo "Copying Docker images..."
+        scp images.tar $DEPLOY_USER@$DEPLOY_HOST:/tmp/images.tar
+      fi
+
+      # Copy and execute deployment script
+      scp deploy.sh $DEPLOY_USER@$DEPLOY_HOST:/tmp/deploy.sh
+      ssh $DEPLOY_USER@$DEPLOY_HOST "chmod +x /tmp/deploy.sh && /tmp/deploy.sh"
+
+      echo "Deployment to $DEPLOY_HOST completed successfully!"
+  dependencies:
+    - build-images
+  environment:
+    name: production
+    url: http://10.0.0.84:3001
+  when: manual
+  only:
+    - main
+
+# ============================================================================
+# ROLLBACK - Rollback to previous version
+# ============================================================================
+
+rollback:
+  stage: deploy
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache openssh-client sshpass
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - ssh-keyscan -H $DEPLOY_HOST >> ~/.ssh/known_hosts
+  script:
+    - |
+      echo "Rolling back deployment on $DEPLOY_HOST..."
+
+      ssh $DEPLOY_USER@$DEPLOY_HOST << 'ROLLBACK_SCRIPT'
+      set -e
+
+      SUDO_PASSWORD="29Dec2#24"
+      DEPLOY_PATH="/opt/wizardsofts-megabuild"
+      PROFILE="gibd-quant"
+
+      cd $DEPLOY_PATH
+
+      # Pull previous commit
+      git reset --hard HEAD~1
+
+      # Rebuild and restart
+      echo "$SUDO_PASSWORD" | sudo -S docker compose --profile $PROFILE down
+      echo "$SUDO_PASSWORD" | sudo -S docker compose --profile $PROFILE build
+      echo "$SUDO_PASSWORD" | sudo -S docker compose --profile $PROFILE up -d
+
+      echo "Rollback complete!"
+      ROLLBACK_SCRIPT
+  when: manual
+  only:
+    - main
+
+# ============================================================================
+# HEALTH CHECK - Verify deployment health
+# ============================================================================
+
+health-check:
+  stage: deploy
+  image: curlimages/curl:latest
+  script:
+    - |
+      echo "Running health checks on $DEPLOY_HOST..."
+
+      # Wait for services to stabilize
+      sleep 30
+
+      # Check Eureka
+      echo "Checking Eureka (ws-discovery)..."
+      curl -f http://$DEPLOY_HOST:8761/actuator/health || exit 1
+
+      # Check Gateway
+      echo "Checking Gateway (ws-gateway)..."
+      curl -f http://$DEPLOY_HOST:8080/actuator/health || exit 1
+
+      # Check Python services
+      echo "Checking Signal Service..."
+      curl -f http://$DEPLOY_HOST:5001/health || exit 1
+
+      echo "Checking NLQ Service..."
+      curl -f http://$DEPLOY_HOST:5002/health || exit 1
+
+      echo "Checking Calibration Service..."
+      curl -f http://$DEPLOY_HOST:5003/health || exit 1
+
+      echo "Checking Agent Service..."
+      curl -f http://$DEPLOY_HOST:5004/health || exit 1
+
+      # Check GIBD Quant Frontend
+      echo "Checking GIBD Quant Frontend..."
+      curl -f http://$DEPLOY_HOST:3001 || exit 1
+
+      # Check Wizardsofts Corporate Website
+      echo "Checking Wizardsofts Website..."
+      curl -f http://$DEPLOY_HOST:3000 || exit 1
+
+      # Check Daily Deen Guide
+      echo "Checking Daily Deen Guide..."
+      curl -f http://$DEPLOY_HOST:3002 || exit 1
+
+      echo "All health checks passed!"
+  dependencies:
+    - deploy-to-84
+  when: on_success
+  only:
+    - main

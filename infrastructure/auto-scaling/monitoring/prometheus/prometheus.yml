@@ -1,0 +1,27 @@
+global:
+  scrape_interval: 30s
+  evaluation_interval: 30s
+
+scrape_configs:
+  - job_name: "autoscaler"
+    static_configs:
+      - targets: ["autoscaler:8000"]
+    metrics_path: /metrics
+    scrape_interval: 15s
+
+  - job_name: "haproxy"
+    static_configs:
+      - targets: ["haproxy:8404"]
+
+  - job_name: "cadvisor"
+    static_configs:
+      - targets:
+          - "10.0.0.80:8080"
+          - "10.0.0.81:8080"
+          - "10.0.0.82:8080"
+          - "10.0.0.84:8080"
+
+  - job_name: "keycloak"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["keycloak:8080"]

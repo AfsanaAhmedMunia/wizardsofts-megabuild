@@ -1,0 +1,359 @@
+# Infrastructure Services Docker Compose
+# Use with: docker compose -f docker-compose.yml -f docker-compose.infrastructure.yml --profile [profile] up -d
+
+version: '3.8'
+
+networks:
+  gibd-network:
+    external: true
+  traefik-public:
+    driver: bridge
+  backend:
+    driver: bridge
+  monitoring:
+    driver: bridge
+
+volumes:
+  traefik-ssl:
+  keycloak-data:
+  postgres-infra-data:
+  redis-infra-data:
+  gitlab-config:
+  gitlab-logs:
+  gitlab-data:
+  nexus-data:
+  ollama-data:
+  grafana-data:
+  prometheus-data:
+  n8n-data:
+
+services:
+  # ========================================================================
+  # TRAEFIK - Reverse Proxy (proxy profile)
+  # ========================================================================
+
+  traefik:
+    image: traefik:v2.10
+    profiles: ["infrastructure", "proxy", "all"]
+    container_name: traefik
+    command:
+      - "--api.dashboard=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.email=admin@wizardsofts.com"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+      - "--log.level=INFO"
+      - "--accesslog=true"
+      - "--metrics.prometheus=true"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8090:8080"  # Dashboard (changed from 8080 to avoid conflict with gateway)
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik-ssl:/letsencrypt
+    networks:
+      - traefik-public
+      - gibd-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dashboard.rule=Host(`traefik.wizardsofts.com`)"
+      - "traefik.http.routers.dashboard.service=api@internal"
+      - "traefik.http.routers.dashboard.middlewares=auth"
+      - "traefik.http.middlewares.auth.basicauth.users=admin:$$apr1$$hGZ8qHVz$$xMvCb3QLm3ZnFnJlpZFT5."
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ========================================================================
+  # KEYCLOAK - Identity & Access Management (auth profile)
+  # ========================================================================
+
+  keycloak-postgres:
+    image: postgres:15-alpine
+    profiles: ["infrastructure", "auth", "all"]
+    container_name: keycloak-postgres
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: ${KEYCLOAK_DB_PASSWORD:-keycloak}
+    volumes:
+      - keycloak-data:/var/lib/postgresql/data
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U keycloak"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:23.0
+    profiles: ["infrastructure", "auth", "all"]
+    container_name: keycloak
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloak-postgres:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD:-keycloak}
+      KC_HOSTNAME: id.wizardsofts.com
+      KC_PROXY: edge
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-Keycl0ak!Admin2025}
+    command: start
+    depends_on:
+      keycloak-postgres:
+        condition: service_healthy
+    networks:
+      - backend
+      - traefik-public
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.keycloak.rule=Host(`id.wizardsofts.com`)"
+      - "traefik.http.routers.keycloak.entrypoints=websecure"
+      - "traefik.http.routers.keycloak.tls.certresolver=letsencrypt"
+      - "traefik.http.services.keycloak.loadbalancer.server.port=8080"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # ========================================================================
+  # GITLAB - CI/CD Platform (cicd profile)
+  # ========================================================================
+
+  gitlab:
+    image: gitlab/gitlab-ce:latest
+    profiles: ["infrastructure", "cicd", "all"]
+    container_name: gitlab
+    hostname: gitlab.wizardsofts.com
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'https://gitlab.wizardsofts.com'
+        gitlab_rails['gitlab_shell_ssh_port'] = 2222
+        nginx['listen_https'] = false
+        nginx['listen_port'] = 80
+    ports:
+      - "2222:22"
+    volumes:
+      - gitlab-config:/etc/gitlab
+      - gitlab-logs:/var/log/gitlab
+      - gitlab-data:/var/opt/gitlab
+    networks:
+      - traefik-public
+      - backend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.gitlab.rule=Host(`gitlab.wizardsofts.com`)"
+      - "traefik.http.routers.gitlab.entrypoints=websecure"
+      - "traefik.http.routers.gitlab.tls.certresolver=letsencrypt"
+      - "traefik.http.services.gitlab.loadbalancer.server.port=80"
+    restart: unless-stopped
+    shm_size: '256m'
+
+  # ========================================================================
+  # NEXUS - Artifact Repository (cicd profile)
+  # ========================================================================
+
+  nexus:
+    image: sonatype/nexus3:latest
+    profiles: ["infrastructure", "cicd", "all"]
+    container_name: nexus
+    volumes:
+      - nexus-data:/nexus-data
+    networks:
+      - traefik-public
+      - backend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.nexus.rule=Host(`nexus.wizardsofts.com`)"
+      - "traefik.http.routers.nexus.entrypoints=websecure"
+      - "traefik.http.routers.nexus.tls.certresolver=letsencrypt"
+      - "traefik.http.services.nexus.loadbalancer.server.port=8081"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8081/ || exit 1"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+
+  # ========================================================================
+  # OLLAMA - AI Model Serving (ai profile)
+  # ========================================================================
+
+  ollama:
+    image: ollama/ollama:latest
+    profiles: ["infrastructure", "ai", "all"]
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    networks:
+      - backend
+      - gibd-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  # ========================================================================
+  # N8N - Workflow Automation (infrastructure profile)
+  # ========================================================================
+
+  n8n:
+    image: n8nio/n8n:latest
+    profiles: ["infrastructure", "all"]
+    container_name: n8n
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_PASSWORD:-W1z4rdS0fts!2025}
+      - N8N_HOST=n8n.wizardsofts.com
+      - N8N_PROTOCOL=https
+      - NODE_ENV=production
+      - WEBHOOK_URL=https://n8n.wizardsofts.com/
+    volumes:
+      - n8n-data:/home/node/.n8n
+    networks:
+      - traefik-public
+      - backend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.n8n.rule=Host(`n8n.wizardsofts.com`)"
+      - "traefik.http.routers.n8n.entrypoints=websecure"
+      - "traefik.http.routers.n8n.tls.certresolver=letsencrypt"
+      - "traefik.http.services.n8n.loadbalancer.server.port=5678"
+    restart: unless-stopped
+
+  # ========================================================================
+  # PROMETHEUS - Metrics Collection (monitoring profile)
+  # ========================================================================
+
+  prometheus:
+    image: prom/prometheus:latest
+    profiles: ["infrastructure", "monitoring", "all"]
+    container_name: prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./infrastructure/auto-scaling/prometheus:/etc/prometheus
+      - prometheus-data:/prometheus
+    networks:
+      - monitoring
+      - gibd-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:9090/-/healthy || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ========================================================================
+  # GRAFANA - Visualization & Dashboards (monitoring profile)
+  # ========================================================================
+
+  grafana:
+    image: grafana/grafana:latest
+    profiles: ["infrastructure", "monitoring", "all"]
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-W1z4rdS0fts!2025}
+      - GF_INSTALL_PLUGINS=grafana-clock-panel
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./infrastructure/auto-scaling/grafana:/etc/grafana/provisioning
+    networks:
+      - monitoring
+      - traefik-public
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.grafana.rule=Host(`grafana.wizardsofts.com`)"
+      - "traefik.http.routers.grafana.entrypoints=websecure"
+      - "traefik.http.routers.grafana.tls.certresolver=letsencrypt"
+      - "traefik.http.services.grafana.loadbalancer.server.port=3000"
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+  # ========================================================================
+  # INFRASTRUCTURE REDIS - Separate from app Redis (data profile)
+  # ========================================================================
+
+  redis-infra:
+    image: redis:7-alpine
+    profiles: ["infrastructure", "data", "all"]
+    container_name: redis-infra
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-infra-data:/data
+    networks:
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ========================================================================
+  # INFRASTRUCTURE POSTGRES - For infrastructure services (data profile)
+  # ========================================================================
+
+  postgres-infra:
+    image: postgres:15-alpine
+    profiles: ["infrastructure", "data", "all"]
+    container_name: postgres-infra
+    environment:
+      POSTGRES_USER: infrastructure
+      POSTGRES_PASSWORD: ${INFRA_DB_PASSWORD:-infrastructure}
+      POSTGRES_MULTIPLE_DATABASES: "n8n,gitlab"
+    volumes:
+      - postgres-infra-data:/var/lib/postgresql/data
+    networks:
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U infrastructure"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ========================================================================
+  # MAILCOW - Mail Server (mail profile)
+  # ========================================================================
+  # Note: Mailcow requires external setup - install separately via:
+  # git clone https://github.com/mailcow/mailcow-dockerized
+  # cd mailcow-dockerized
+  # ./generate_config.sh
+  # docker compose up -d
+  # This entry documents Traefik integration for existing mailcow installation
+
+  # Mailcow services are managed externally but integrate via Traefik labels
+  # See: https://docs.mailcow.email/third_party/third_party-traefik/
+
+  # DNS Records needed for mailcow:
+  # mail.wizardsofts.com    A      10.0.0.84
+  # @                       MX     mail.wizardsofts.com (Priority: 10)
+  # @                       TXT    "v=spf1 mx ~all"
+  # _dmarc                  TXT    "v=DMARC1; p=quarantine; rua=mailto:postmaster@wizardsofts.com"
