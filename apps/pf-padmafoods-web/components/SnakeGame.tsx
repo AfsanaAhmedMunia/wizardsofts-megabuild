@@ -118,8 +118,10 @@ export default function SnakeGame() {
 
   return (
     <div className="flex flex-col items-center justify-center gap-4 p-6 bg-white rounded-lg shadow-lg">
-      <h2 className="text-2xl font-bold text-padma-red">Snake Game</h2>
-      <p className="text-sm text-gray-600">Use arrow keys to play</p>
+      <div className="text-center">
+        <h2 className="text-2xl font-bold text-padma-red">Snake Game</h2>
+        <p className="text-xs text-gray-500 mt-1">Use arrow keys</p>
+      </div>
 
       <div className="relative bg-gray-900 border-4 border-padma-red rounded-lg overflow-hidden">
         <div

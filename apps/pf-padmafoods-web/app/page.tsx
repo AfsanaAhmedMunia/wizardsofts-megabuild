@@ -36,18 +36,13 @@ export default function ComingSoonPage() {
         <section className="min-h-screen flex flex-col items-center justify-center px-4 py-12 gap-12">
           {/* Top Section - Centered Branding */}
           <div className="w-full text-center">
-            {/* Coming Soon Badge - TOP & FLASHING */}
-            <div className="inline-block mb-6 px-6 py-2 bg-padma-red text-white rounded-full font-bold text-sm tracking-wide animate-flash">
-              Coming Soon!
-            </div>
-
             {/* Main Heading - Script Font */}
             <h1 className="font-script text-4xl md:text-6xl text-padma-red mb-1 leading-tight">
               Padma Foods
             </h1>
 
             {/* Since 1995 - Script Font Subtitle */}
-            <p className="font-script text-xl md:text-2xl text-padma-blue mb-4">
+            <p className="font-script text-xl md:text-2xl text-padma-blue mb-6">
               Since 1995
             </p>
 
@@ -55,13 +50,18 @@ export default function ComingSoonPage() {
             <h2 className="font-sans text-xl md:text-2xl font-bold text-padma-blue mb-6 tracking-wide">
               QUALITY ASSURED
             </h2>
+
+            {/* Coming Soon Badge - BELOW QUALITY ASSURED */}
+            <div className="inline-block px-6 py-2 bg-padma-red text-white rounded-full font-bold text-sm tracking-wide animate-flash">
+              Coming Soon!
+            </div>
           </div>
 
           {/* Bottom Section - Contact Box and Game Side by Side */}
-          <div className="w-full flex flex-col lg:flex-row gap-8 max-w-6xl items-center lg:items-start justify-center">
+          <div className="w-full flex flex-col lg:flex-row gap-8 max-w-5xl items-stretch lg:items-stretch justify-center">
             {/* Left - Contact Section */}
             <div className="w-full lg:flex-1 flex justify-center">
-              <div className="bg-gradient-to-br from-padma-red to-red-700 rounded-3xl p-8 md:p-12 shadow-2xl max-w-2xl border-4 border-padma-blue">
+              <div className="bg-gradient-to-br from-padma-red to-red-700 rounded-3xl p-8 md:p-12 shadow-2xl border-4 border-padma-blue">
                 <h3 className="text-white text-3xl md:text-4xl font-bold mb-2 text-center">
                   Get in Touch
                 </h3>
@@ -110,8 +110,7 @@ export default function ComingSoonPage() {
             </div>
 
             {/* Right - Snake Game */}
-            <div className="w-full lg:w-96 flex flex-col items-center">
-              <h2 className="text-2xl md:text-3xl font-bold text-padma-red mb-6">While You Wait...</h2>
+            <div className="w-full lg:flex-1 flex flex-col items-center justify-center">
               <SnakeGame />
             </div>
           </div>
