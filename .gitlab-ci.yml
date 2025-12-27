@@ -357,29 +357,39 @@ deploy-web-apps:
   stage: deploy
   image: alpine:latest
   before_script:
-    - apk add --no-cache rsync
+    - apk add --no-cache openssh-client rsync
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - ssh-keyscan -H $DEPLOY_HOST >> ~/.ssh/known_hosts
   script:
     - |
-      echo "Deploying web applications locally on runner..."
+      echo "Deploying web applications to $DEPLOY_HOST..."
 
       # Sync Traefik configuration
       echo "Syncing Traefik configuration..."
-      mkdir -p /home/wizardsofts/traefik
-      cp -r infrastructure/traefik/* /home/wizardsofts/traefik/
+      rsync -av infrastructure/traefik/ $DEPLOY_USER@$DEPLOY_HOST:/home/wizardsofts/traefik/
 
       # Sync web app docker-compose configurations
       for service in ws-wizardsofts-web ws-daily-deen-web pf-padmafoods-web gibd-quant-web; do
         if [ -d "apps/$service" ]; then
           echo "Syncing $service..."
-          mkdir -p /home/wizardsofts/apps/$service
-          rsync -av --exclude 'node_modules' --exclude '.next' apps/$service/ /home/wizardsofts/apps/$service/
+          rsync -av --exclude 'node_modules' --exclude '.next' apps/$service/ $DEPLOY_USER@$DEPLOY_HOST:/home/wizardsofts/apps/$service/
         fi
       done
+
+      # Create and execute deployment script on remote server
+      ssh $DEPLOY_USER@$DEPLOY_HOST << 'DEPLOY_EOF'
+      set -e
+
+      echo "Ensuring microservices-overlay network exists..."
+      docker network create microservices-overlay 2>/dev/null || echo "Network already exists"
 
       # Restart Traefik to pick up config changes
       echo "Restarting Traefik..."
       cd /home/wizardsofts/traefik
-      snap run docker compose restart traefik || snap run docker compose up -d traefik
+      docker compose restart traefik || docker compose up -d traefik
 
       # Deploy each web app
       for service in ws-wizardsofts-web ws-daily-deen-web pf-padmafoods-web gibd-quant-web; do
@@ -388,20 +398,27 @@ deploy-web-apps:
           cd /home/wizardsofts/apps/$service
 
           # Build image
-          snap run docker compose build
+          docker compose build
 
           # Restart container
-          snap run docker compose up -d
+          docker compose up -d
+
+          # Return to base directory
+          cd /home/wizardsofts/apps
         fi
       done
 
       echo "Web apps deployment complete!"
+      docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" | grep -E "wizardsofts|daily-deen|padmafoods|gibd-quant" || true
+      DEPLOY_EOF
+
+      echo "Deployment to $DEPLOY_HOST completed!"
   dependencies:
     - build-images
   environment:
     name: production-web
     url: https://www.wizardsofts.com
-  when: manual
+  when: on_success
   only:
     - main
     - master
