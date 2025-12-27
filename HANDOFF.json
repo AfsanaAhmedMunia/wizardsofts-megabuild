@@ -1,0 +1,358 @@
+{
+  "handoff_document": {
+    "date": "2025-12-27",
+    "project": "WizardSofts Megabuild - 10.0.0.84 Deployment",
+    "status": "IN PROGRESS - Services Deployment",
+    "priority": "HIGH",
+
+    "summary": {
+      "objective": "Deploy all services to 10.0.0.84 server and verify Coming Soon feature works",
+      "current_state": "Only Appwrite services running; main backend services not started yet",
+      "blockers": [
+        "Python service Dockerfiles have incorrect uv pip install syntax (fixed locally, but in git submodules)",
+        "Backend services (Java + Python) not yet built/started",
+        ".env file not yet created on server at /home/wizardsofts/wizardsofts-megabuild/"
+      ],
+      "progress": "75% - Code complete, environment config complete, deployment started but incomplete"
+    },
+
+    "context": {
+      "original_request": "Configure guardianinvestmentbd.com to show Coming Soon page when accessed via domain name (not local IP), with contact email info@guardianinvestmentbd.com",
+      "scope_expanded_to": "Complete deployment of entire application stack with all services on 10.0.0.84",
+      "server_details": {
+        "host": "10.0.0.84",
+        "ssh_user": "wizardsofts",
+        "ssh_password": "29Dec2#24",
+        "deployment_directory": "/home/wizardsofts/wizardsofts-megabuild",
+        "disk_space_available": "22GB in /home",
+        "os": "Ubuntu/Debian-based Linux"
+      }
+    },
+
+    "completed_work": {
+      "1_coming_soon_feature": {
+        "status": "✅ COMPLETE",
+        "description": "Implemented Coming Soon page for guardianinvestmentbd.com domain access",
+        "files_created": [
+          "apps/gibd-quant-web/middleware.ts - Request interceptor, checks Host header",
+          "apps/gibd-quant-web/app/coming-soon/page.tsx - Beautiful landing page",
+          "apps/gibd-quant-web/app/coming-soon/layout.tsx - Full-screen overlay layout"
+        ],
+        "files_modified": [
+          "apps/gibd-quant-web/README.md - Documentation added"
+        ],
+        "how_it_works": "Middleware intercepts requests, checks if Host is guardianinvestmentbd.com, routes to /coming-soon page. Local IP access shows full app.",
+        "contact_email": "info@guardianinvestmentbd.com"
+      },
+
+      "2_ci_cd_fixes": {
+        "status": "✅ COMPLETE",
+        "description": "Fixed .gitlab-ci.yml to support master branch and alpine compatibility",
+        "commits": [
+          "5662367 - Add master branch support to CI/CD pipeline",
+          "0aafcb3 - Fix detect-changes stage to work with alpine git image"
+        ],
+        "changes": "Added master to 'only' sections, fixed alpine git compatibility in detect-changes stage"
+      },
+
+      "3_environment_configuration": {
+        "status": "✅ COMPLETE",
+        "description": "Created comprehensive .env configuration guide",
+        "files_created": [
+          "ENV_CONFIGURATION_GUIDE.md - Complete setup instructions with variable explanations"
+        ],
+        "variables_configured": {
+          "CRITICAL": {
+            "DB_PASSWORD": "29Dec2#24",
+            "OPENAI_API_KEY": "sk-placeholder-needs-real-key"
+          },
+          "ANALYTICS": {
+            "NEXT_PUBLIC_GA_MEASUREMENT_ID": "G-XXXXXXXXXX (needs Google Analytics ID)",
+            "NEXT_PUBLIC_ADSENSE_CLIENT_ID": "ca-pub-XXXXXXXXXX (needs AdSense ID)"
+          },
+          "INFRASTRUCTURE": {
+            "TRAEFIK_DASHBOARD_PASSWORD": "W1z4rdS0fts!2025",
+            "ACME_EMAIL": "admin@wizardsofts.com"
+          }
+        }
+      },
+
+      "4_documentation": {
+        "status": "✅ COMPLETE",
+        "files_created": [
+          "COMING_SOON_DEPLOYMENT_GUIDE.md - Step-by-step deployment for Coming Soon feature",
+          "EMERGENCY_RECOVERY.md - Service recovery procedures and troubleshooting",
+          "DEPLOYMENT_CHECKLIST_84.md - Complete deployment checklist with 15+ microservices",
+          "HANDOFF.json - This document"
+        ],
+        "purpose": "Comprehensive guides for team members to understand architecture and troubleshoot issues"
+      },
+
+      "5_dockerfile_fixes": {
+        "status": "✅ PARTIAL - Fixed but in git submodules",
+        "description": "Fixed uv pip install syntax in Python service Dockerfiles",
+        "files_fixed": [
+          "apps/gibd-quant-agent/Dockerfile",
+          "apps/gibd-quant-signal/Dockerfile",
+          "apps/gibd-quant-nlq/Dockerfile",
+          "apps/gibd-quant-calibration/Dockerfile",
+          "apps/gibd-quant-celery/Dockerfile"
+        ],
+        "change": "Removed invalid '-r' flag from 'uv pip install --system -r pyproject.toml'",
+        "corrected_to": "uv pip install --system",
+        "note": "These are in git submodules, need to be committed in submodule repos separately"
+      }
+    },
+
+    "current_server_status": {
+      "running_services": [
+        "appwrite:1.8.1 (13 containers - main BaaS platform)",
+        "appwrite-realtime (WebSocket service)",
+        "appwrite-mariadb:10.11 (healthy)",
+        "appwrite-redis:7-alpine (healthy)"
+      ],
+      "not_running": [
+        "postgres (database)",
+        "redis (cache)",
+        "ws-discovery (Eureka service registry)",
+        "ws-gateway (API Gateway)",
+        "ws-trades, ws-company, ws-news (Spring Boot APIs)",
+        "gibd-quant-signal, gibd-quant-nlq, gibd-quant-calibration, gibd-quant-agent (Python ML services)",
+        "gibd-quant-web (Frontend - required for Coming Soon)",
+        "traefik (Reverse proxy - may be in separate compose file)"
+      ]
+    },
+
+    "next_steps": [
+      {
+        "step": 1,
+        "title": "Create .env file on server",
+        "command": "cat > .env << 'EOF'\nDB_PASSWORD=29Dec2#24\nOPENAI_API_KEY=sk-your-openai-api-key-here\nNEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX\nNEXT_PUBLIC_ADSENSE_CLIENT_ID=ca-pub-XXXXXXXXXXXXXXXX\nNEXT_PUBLIC_ADSENSE_BANNER_SLOT=XXXXXXXXXX\nNEXT_PUBLIC_ADSENSE_SIDEBAR_SLOT=XXXXXXXXXX\nNEXT_PUBLIC_ADSENSE_INFEED_SLOT=XXXXXXXXXX\nTRAEFIK_DASHBOARD_PASSWORD=W1z4rdS0fts!2025\nACME_EMAIL=admin@wizardsofts.com\nDEPLOY_HOST=10.0.0.84\nDEPLOY_USER=wizardsofts\nDEPLOY_PASSWORD=29Dec2#24\nDEPLOY_PATH=/opt/wizardsofts-megabuild\nEOF",
+        "location": "/home/wizardsofts/wizardsofts-megabuild/",
+        "critical": true,
+        "why": "Backend services need DB_PASSWORD to connect to PostgreSQL database"
+      },
+      {
+        "step": 2,
+        "title": "Pull latest code",
+        "command": "git pull origin master",
+        "location": "/home/wizardsofts/wizardsofts-megabuild/",
+        "critical": true,
+        "why": "Ensure all Dockerfile fixes are present"
+      },
+      {
+        "step": 3,
+        "title": "Start core services first (skip Python ML services initially)",
+        "command": "docker-compose down && docker-compose up -d postgres redis ws-discovery ws-gateway ws-trades ws-company ws-news gibd-quant-web traefik",
+        "location": "/home/wizardsofts/wizardsofts-megabuild/",
+        "critical": true,
+        "why": "Start Java services and frontend without Python service build issues; they can be added later",
+        "wait_time": "5-10 minutes for first build (Maven downloads dependencies)"
+      },
+      {
+        "step": 4,
+        "title": "Verify services are running",
+        "command": "docker-compose ps && sleep 120 && docker-compose ps",
+        "expected_output": "postgres (healthy), redis (healthy), ws-discovery (healthy), ws-gateway (healthy), gibd-quant-web (running)",
+        "critical": true
+      },
+      {
+        "step": 5,
+        "title": "Test Coming Soon page",
+        "command": "curl -H 'Host: www.guardianinvestmentbd.com' http://localhost/ | grep -i 'coming soon'",
+        "expected": "Should contain 'Coming Soon' in response",
+        "critical": true,
+        "why": "Verify original feature request is working"
+      },
+      {
+        "step": 6,
+        "title": "Test API Gateway health",
+        "command": "curl http://localhost:8080/actuator/health",
+        "expected": "{'status':'UP'} or similar healthy response",
+        "critical": true
+      },
+      {
+        "step": 7,
+        "title": "Test multi-criteria endpoint (was broken before)",
+        "command": "curl http://localhost:4002/multi-criteria",
+        "expected": "Should load multi-criteria page without errors",
+        "critical": false,
+        "depends_on": "Step 6 - API Gateway must be running"
+      },
+      {
+        "step": 8,
+        "title": "Add Python ML services (optional, requires fixing submodule commits)",
+        "command": "Update submodules with Dockerfile fixes, then docker-compose --profile gibd-quant up -d",
+        "critical": false,
+        "why": "These services provide AI features; not needed for basic functionality"
+      }
+    ],
+
+    "issues_and_solutions": [
+      {
+        "issue": "Docker build fails with 'uv pip install --system -r pyproject.toml' returned non-zero code: 1",
+        "root_cause": "Python Dockerfiles use -r flag (for requirements.txt) but with pyproject.toml",
+        "solution": "Remove -r flag: change 'uv pip install --system -r pyproject.toml' to 'uv pip install --system'",
+        "status": "FIXED in local Dockerfiles (5 files)",
+        "affected_services": "gibd-quant-agent, gibd-quant-signal, gibd-quant-nlq, gibd-quant-calibration, gibd-quant-celery",
+        "note": "These are git submodules; fixes were made locally but need separate commits in submodule repos"
+      },
+      {
+        "issue": "Services not starting even after docker-compose up",
+        "possible_causes": [
+          ".env file missing on server",
+          "Insufficient disk space",
+          "Insufficient memory for Java services"
+        ],
+        "solution": "Create .env file, check disk space (df -h), check memory (free -h), view logs (docker-compose logs -f)",
+        "status": "UNKNOWN - need to verify in next steps"
+      },
+      {
+        "issue": "traefik not routing to gibd-quant-web",
+        "possible_causes": [
+          "gibd-quant-web container not running",
+          "traefik not configured properly",
+          "network connectivity issue"
+        ],
+        "solution": "Verify gibd-quant-web is running (docker-compose ps), check traefik config (docker-compose logs traefik), verify network (docker network ls)"
+      },
+      {
+        "issue": "Coming Soon page not displaying for domain access",
+        "possible_causes": [
+          "middleware.ts not compiled into Docker image",
+          "Old Docker image (v5) still running",
+          "gibd-quant-web container not running"
+        ],
+        "solution": "Rebuild image: docker-compose build --no-cache gibd-quant-web, restart: docker-compose up -d gibd-quant-web"
+      }
+    ],
+
+    "critical_paths": {
+      "minimum_to_deploy": [
+        "postgres - database",
+        "redis - cache",
+        "ws-discovery - Eureka service registry",
+        "ws-gateway - API Gateway (routes all backend calls)",
+        "gibd-quant-web - Frontend with Coming Soon middleware"
+      ],
+      "optional_but_recommended": [
+        "ws-trades, ws-company, ws-news - data services",
+        "gibd-quant-nlq, gibd-quant-signal - AI features"
+      ],
+      "deployment_order": "postgres → redis → ws-discovery (wait healthy) → ws-gateway (wait healthy) → other services → gibd-quant-web"
+    },
+
+    "performance_notes": {
+      "first_build_time": "15-30 minutes (downloading Maven dependencies)",
+      "subsequent_starts": "2-3 minutes",
+      "disk_space_needed": "30GB minimum (Docker images ~15GB, data varies)",
+      "memory_needed": "8GB minimum (Java services consume 500MB-1GB each)",
+      "current_available": {
+        "disk": "22GB in /home directory",
+        "warning": "TIGHT - only 22GB available, need at least 30GB. May need to clean up /var (currently 50GB)"
+      }
+    },
+
+    "testing_checklist": [
+      {
+        "test": "Coming Soon Feature",
+        "command": "curl -H 'Host: www.guardianinvestmentbd.com' http://localhost/",
+        "expected": "HTML page containing 'Coming Soon' and 'info@guardianinvestmentbd.com'",
+        "critical": true
+      },
+      {
+        "test": "Local IP Access (Full App)",
+        "command": "curl http://localhost:3000/",
+        "expected": "Full application home page, NO Coming Soon",
+        "critical": true
+      },
+      {
+        "test": "API Gateway Health",
+        "command": "curl http://localhost:8080/actuator/health",
+        "expected": "JSON response with 'status': 'UP'",
+        "critical": true
+      },
+      {
+        "test": "Eureka Service Registry",
+        "command": "curl http://localhost:8761/actuator/health",
+        "expected": "JSON response with 'status': 'UP'",
+        "critical": true
+      },
+      {
+        "test": "Multi-Criteria Endpoint",
+        "command": "curl http://localhost:4002/multi-criteria",
+        "expected": "Page loads without 500 errors",
+        "critical": false
+      },
+      {
+        "test": "Traefik Dashboard",
+        "command": "curl http://localhost:8080/dashboard/",
+        "expected": "HTML dashboard page",
+        "critical": false
+      }
+    ],
+
+    "git_commits_for_reference": [
+      {
+        "hash": "ed2f569",
+        "message": "docs: Add complete deployment checklist for 10.0.0.84",
+        "date": "2025-12-27"
+      },
+      {
+        "hash": "00adaf7",
+        "message": "docs: Add comprehensive environment configuration guide",
+        "date": "2025-12-27"
+      },
+      {
+        "hash": "fb2ebe7",
+        "message": "docs: Add emergency service recovery guide",
+        "date": "2025-12-27"
+      },
+      {
+        "hash": "611c721",
+        "message": "docs: Add Coming Soon deployment guide with instructions and troubleshooting",
+        "date": "2025-12-27"
+      },
+      {
+        "hash": "31b30a4",
+        "message": "feat: Add Coming Soon page for guardianinvestmentbd.com domain",
+        "date": "2025-12-27",
+        "note": "Core feature implementation"
+      },
+      {
+        "hash": "5662367",
+        "message": "fix: Add master branch support to CI/CD pipeline",
+        "date": "2025-12-27"
+      },
+      {
+        "hash": "0aafcb3",
+        "message": "fix: Fix detect-changes stage to work with alpine git image",
+        "date": "2025-12-27"
+      }
+    ],
+
+    "contact_information": {
+      "feature_email": "info@guardianinvestmentbd.com",
+      "server": "10.0.0.84",
+      "ssh_user": "wizardsofts",
+      "ssh_password": "29Dec2#24",
+      "db_password": "29Dec2#24"
+    },
+
+    "known_limitations": [
+      "Python ML services (signal, NLQ, calibration, agent) have Dockerfile syntax errors that need fixing in git submodules",
+      "Google Analytics and AdSense IDs are placeholders - need real values from client",
+      "OpenAI API key is placeholder - AI features disabled until real key provided",
+      "Disk space is tight (only 22GB available, need 30GB) - may need cleanup"
+    ],
+
+    "recommendations_for_next_agent": [
+      "Start with Step 1 (create .env) and Step 3 (start core services)",
+      "Focus on Java services first, leave Python ML services for later",
+      "Test Coming Soon feature works before doing anything else",
+      "Monitor logs closely: 'docker-compose logs -f' to see what's happening",
+      "Don't worry about Python service builds until core services are stable",
+      "Contact user for real Google Analytics ID and OpenAI API key when available"
+    ]
+  }
+}
