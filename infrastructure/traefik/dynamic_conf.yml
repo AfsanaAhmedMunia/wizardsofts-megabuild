@@ -292,7 +292,7 @@ http:
     dailydeen-web:
       loadBalancer:
         servers:
-          - url: "http://ws-daily-deen-web:3000"
+          - url: "http://daily-deen-guide-frontend:3000"
 
     quant-web:
       loadBalancer:

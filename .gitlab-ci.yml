@@ -142,7 +142,7 @@ test-nextjs:
   before_script:
     - |
       # Check if any Next.js service changed
-      if grep -qE "ws-wizardsofts-web|ws-daily-deen-web|gibd-quant-web" changed_services.txt || grep -q "all" changed_services.txt; then
+      if grep -qE "ws-wizardsofts-web|ws-daily-deen-web|gibd-quant-web|pf-padmafoods-web" changed_services.txt || grep -q "all" changed_services.txt; then
         echo "Next.js services changed, running tests"
       else
         echo "No Next.js services changed, skipping tests"
@@ -150,7 +150,7 @@ test-nextjs:
       fi
   script:
     - |
-      for service in ws-wizardsofts-web ws-daily-deen-web gibd-quant-web; do
+      for service in ws-wizardsofts-web ws-daily-deen-web gibd-quant-web pf-padmafoods-web; do
         if grep -q "$service\|all" changed_services.txt; then
           echo "Testing $service..."
           cd apps/$service
@@ -339,6 +339,75 @@ deploy-to-84:
   environment:
     name: production
     url: http://10.0.0.84:3001
+  when: manual
+  only:
+    - main
+    - master
+
+# ============================================================================
+# DEPLOY WEB APPS - Deploy web applications via Traefik
+# ============================================================================
+
+deploy-web-apps:
+  stage: deploy
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache openssh-client rsync docker-cli
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - ssh-keyscan -H $DEPLOY_HOST >> ~/.ssh/known_hosts
+  script:
+    - |
+      echo "Deploying web applications to $DEPLOY_HOST..."
+
+      # Sync Traefik configuration
+      echo "Syncing Traefik configuration..."
+      rsync -avz infrastructure/traefik/ $DEPLOY_USER@$DEPLOY_HOST:/home/wizardsofts/traefik/
+
+      # Sync web app docker-compose configurations
+      for service in ws-wizardsofts-web ws-daily-deen-web pf-padmafoods-web; do
+        if [ -d "apps/$service" ]; then
+          echo "Syncing $service..."
+          ssh $DEPLOY_USER@$DEPLOY_HOST "mkdir -p /home/wizardsofts/apps/$service"
+          rsync -avz --exclude 'node_modules' --exclude '.next' apps/$service/ $DEPLOY_USER@$DEPLOY_HOST:/home/wizardsofts/apps/$service/
+        fi
+      done
+
+      # Build and deploy web apps on server
+      ssh $DEPLOY_USER@$DEPLOY_HOST << 'WEBAPPS_DEPLOY'
+      set -e
+
+      SUDO_PASSWORD="29Dec2#24"
+
+      # Restart Traefik to pick up config changes
+      cd /home/wizardsofts/traefik
+      snap run docker compose restart traefik || snap run docker compose up -d traefik
+
+      # Deploy each web app
+      for service in ws-wizardsofts-web ws-daily-deen-web pf-padmafoods-web; do
+        if [ -d "/home/wizardsofts/apps/$service" ]; then
+          echo "Deploying $service..."
+          cd /home/wizardsofts/apps/$service
+
+          # Build image
+          snap run docker compose build
+
+          # Restart container
+          snap run docker compose up -d
+        fi
+      done
+
+      echo "Web apps deployment complete!"
+      WEBAPPS_DEPLOY
+
+      echo "Web apps deployed successfully!"
+  dependencies:
+    - build-images
+  environment:
+    name: production-web
+    url: https://www.wizardsofts.com
   when: manual
   only:
     - main
