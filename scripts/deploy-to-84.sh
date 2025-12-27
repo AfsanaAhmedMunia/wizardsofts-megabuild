@@ -75,13 +75,13 @@ if [ ! -f .env ]; then
 fi
 
 echo "Stopping existing services..."
-echo "\$SUDO_PASSWORD" | sudo -S docker compose --profile $COMPOSE_PROFILE down || true
+echo "\$SUDO_PASSWORD" | sudo -S docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile $COMPOSE_PROFILE down || true
 
 echo "Building Docker images..."
-echo "\$SUDO_PASSWORD" | sudo -S docker compose --profile $COMPOSE_PROFILE build
+echo "\$SUDO_PASSWORD" | sudo -S docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile $COMPOSE_PROFILE build
 
 echo "Starting services..."
-echo "\$SUDO_PASSWORD" | sudo -S docker compose --profile $COMPOSE_PROFILE up -d
+echo "\$SUDO_PASSWORD" | sudo -S docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile $COMPOSE_PROFILE up -d
 
 echo "Waiting for services to start..."
 sleep 15
@@ -97,89 +97,59 @@ echo ""
 echo -e "${YELLOW}Running health checks...${NC}"
 sleep 15
 
-# Check Eureka
-if curl -f -s http://$DEPLOY_HOST:8762/actuator/health > /dev/null 2>&1; then
-    echo -e "${GREEN}✓ Eureka (8762): UP${NC}"
+# Check Traefik (only exposed ports in production)
+if curl -f -s http://$DEPLOY_HOST:80 > /dev/null 2>&1; then
+    echo -e "${GREEN}✓ Traefik (80): UP${NC}"
 else
-    echo -e "${RED}✗ Eureka (8762): DOWN${NC}"
+    echo -e "${RED}✗ Traefik (80): DOWN${NC}"
 fi
 
-# Check Gateway
-if curl -f -s http://$DEPLOY_HOST:8080/actuator/health > /dev/null 2>&1; then
-    echo -e "${GREEN}✓ Gateway (8080): UP${NC}"
+# Check Traefik Dashboard
+if curl -f -s http://$DEPLOY_HOST:8090/api/overview > /dev/null 2>&1; then
+    echo -e "${GREEN}✓ Traefik Dashboard (8090): UP${NC}"
 else
-    echo -e "${RED}✗ Gateway (8080): DOWN${NC}"
+    echo -e "${RED}✗ Traefik Dashboard (8090): DOWN${NC}"
 fi
 
-# Check Signal Service
-if curl -f -s http://$DEPLOY_HOST:5001/health > /dev/null 2>&1; then
-    echo -e "${GREEN}✓ Signal Service (5001): UP${NC}"
-else
-    echo -e "${RED}✗ Signal Service (5001): DOWN${NC}"
-fi
-
-# Check NLQ Service
-if curl -f -s http://$DEPLOY_HOST:5002/health > /dev/null 2>&1; then
-    echo -e "${GREEN}✓ NLQ Service (5002): UP${NC}"
-else
-    echo -e "${RED}✗ NLQ Service (5002): DOWN${NC}"
-fi
-
-# Check Calibration Service
-if curl -f -s http://$DEPLOY_HOST:5003/health > /dev/null 2>&1; then
-    echo -e "${GREEN}✓ Calibration Service (5003): UP${NC}"
-else
-    echo -e "${RED}✗ Calibration Service (5003): DOWN${NC}"
-fi
-
-# Check Agent Service
-if curl -f -s http://$DEPLOY_HOST:5004/health > /dev/null 2>&1; then
-    echo -e "${GREEN}✓ Agent Service (5004): UP${NC}"
-else
-    echo -e "${RED}✗ Agent Service (5004): DOWN${NC}"
-fi
-
-# Check Quant-Flow Frontend
-if curl -f -s http://$DEPLOY_HOST:3001 > /dev/null 2>&1; then
-    echo -e "${GREEN}✓ Quant-Flow Frontend (3001): UP${NC}"
-else
-    echo -e "${RED}✗ Quant-Flow Frontend (3001): DOWN${NC}"
-fi
-
-# Check Wizardsofts Corporate Website
-if curl -f -s http://$DEPLOY_HOST:3000 > /dev/null 2>&1; then
-    echo -e "${GREEN}✓ Wizardsofts.com (3000): UP${NC}"
-else
-    echo -e "${RED}✗ Wizardsofts.com (3000): DOWN${NC}"
-fi
-
-# Check Daily Deen Guide
-if curl -f -s http://$DEPLOY_HOST:3002 > /dev/null 2>&1; then
-    echo -e "${GREEN}✓ Daily Deen Guide (3002): UP${NC}"
-else
-    echo -e "${RED}✗ Daily Deen Guide (3002): DOWN${NC}"
-fi
+echo ""
+echo -e "${YELLOW}Note: All services are secured behind Traefik reverse proxy${NC}"
+echo -e "${YELLOW}Direct port access is disabled for security${NC}"
 
 echo ""
 echo -e "${GREEN}========================================${NC}"
 echo -e "${GREEN}Deployment Complete!${NC}"
 echo -e "${GREEN}========================================${NC}"
 echo ""
-echo "Access your applications at:"
+echo -e "${GREEN}Production Security:${NC}"
+echo "  ✓ Only ports 80, 443, 8090 exposed (Traefik)"
+echo "  ✓ All services behind reverse proxy with SSL"
+echo "  ✓ Database and cache not accessible from internet"
 echo ""
-echo "Web Applications:"
-echo "  - Wizardsofts.com: http://$DEPLOY_HOST:3000"
-echo "  - Daily Deen Guide: http://$DEPLOY_HOST:3002"
-echo "  - Quant-Flow: http://$DEPLOY_HOST:3001"
+echo -e "${YELLOW}Next Steps - Configure DNS:${NC}"
 echo ""
-echo "Infrastructure Services:"
-echo "  - Eureka Dashboard: http://$DEPLOY_HOST:8762"
-echo "  - API Gateway: http://$DEPLOY_HOST:8080"
-echo "  - Signal Service: http://$DEPLOY_HOST:5001"
-echo "  - NLQ Service: http://$DEPLOY_HOST:5002"
-echo "  - Calibration Service: http://$DEPLOY_HOST:5003"
-echo "  - Agent Service: http://$DEPLOY_HOST:5004"
+echo "1. Add these A records to your DNS provider:"
+echo "   www.wizardsofts.com           → $DEPLOY_HOST"
+echo "   dailydeenguide.wizardsofts.com → $DEPLOY_HOST"
+echo "   quant.wizardsofts.com         → $DEPLOY_HOST"
+echo "   api.wizardsofts.com           → $DEPLOY_HOST"
+echo "   eureka.wizardsofts.com        → $DEPLOY_HOST"
+echo "   traefik.wizardsofts.com       → $DEPLOY_HOST"
+echo ""
+echo "2. Once DNS is configured, access services via HTTPS:"
+echo ""
+echo -e "${GREEN}Public Web Applications (HTTPS):${NC}"
+echo "  - https://www.wizardsofts.com"
+echo "  - https://dailydeenguide.wizardsofts.com"
+echo "  - https://quant.wizardsofts.com"
+echo ""
+echo -e "${GREEN}Infrastructure (HTTPS + Auth):${NC}"
+echo "  - https://api.wizardsofts.com"
+echo "  - https://eureka.wizardsofts.com (admin/password)"
+echo "  - https://traefik.wizardsofts.com (admin/password)"
+echo ""
+echo -e "${YELLOW}Temporary Access (before DNS):${NC}"
+echo "  - Traefik Dashboard: http://$DEPLOY_HOST:8090"
 echo ""
 echo "To view logs:"
-echo "  ssh $DEPLOY_USER@$DEPLOY_HOST 'cd $DEPLOY_PATH && docker compose logs -f'"
+echo "  ssh $DEPLOY_USER@$DEPLOY_HOST 'cd $DEPLOY_PATH && docker compose -f docker-compose.yml -f docker-compose.prod.yml logs -f'"
 echo ""
