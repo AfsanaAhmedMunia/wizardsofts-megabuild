@@ -34,6 +34,11 @@ export default function ComingSoonPage() {
         {/* Hero Section */}
         <section className="min-h-screen flex items-center justify-center px-4 py-12">
           <div className="max-w-4xl w-full text-center">
+            {/* Coming Soon Badge - TOP & FLASHING */}
+            <div className="inline-block mb-6 px-6 py-2 bg-padma-red text-white rounded-full font-bold text-sm tracking-wide animate-flash">
+              Coming Soon!
+            </div>
+
             {/* Main Heading - Script Font */}
             <h1 className="font-script text-4xl md:text-6xl text-padma-red mb-1 leading-tight">
               Padma Foods
@@ -95,13 +100,6 @@ export default function ComingSoonPage() {
                   </svg>
                 </a>
               </div>
-            </div>
-
-            {/* Coming Soon Badge - Secondary */}
-            <div className="inline-block mb-12 px-8 py-3 bg-padma-blue/10 border-2 border-padma-blue rounded-full">
-              <p className="text-padma-blue font-bold text-lg">
-                Coming Soon!
-              </p>
             </div>
           </div>
         </section>
