@@ -97,6 +97,21 @@ NEXT_PUBLIC_ADSENSE_INFEED_SLOT=XXXXXXXXXX
 
 ## Features
 
+### Coming Soon Mode
+
+When accessed via the production domain (`guardianinvestmentbd.com`), the app displays a Coming Soon page instead of the full application. This allows development to continue while the site is publicly accessible.
+
+**How it works:**
+- Middleware ([middleware.ts](./middleware.ts)) checks the request host
+- Production domains show `/coming-soon` page
+- Local/IP access shows the full application
+
+**To disable Coming Soon mode:**
+1. Delete `middleware.ts`, OR
+2. Remove the domain from the `comingSoonDomains` array in middleware
+
+**Contact displayed:** info@guardianinvestmentbd.com
+
 ### Fixed Layout & Navigation
 
 The application features a minimal, fixed layout design:
