@@ -18,39 +18,22 @@ services:
   traefik:
     image: traefik:v2.10
     container_name: traefik
-    command:
-      - "--api.dashboard=true"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.web.address=:80"
-      - "--entrypoints.websecure.address=:443"
-      - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
-      - "--certificatesresolvers.letsencrypt.acme.email=admin@wizardsofts.com"
-      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
-      - "--log.level=INFO"
-      - "--accesslog=true"
-      - "--metrics.prometheus=true"
-      # Security middleware
-      - "--http.middlewares.admin-auth.basicauth.users=admin:$$apr1$$hGZ8qHVz$$xMvCb3QLm3ZnFnJlpZFT5."
-      - "--http.middlewares.rate-limit.ratelimit.average=100"
-      - "--http.middlewares.rate-limit.ratelimit.burst=50"
     ports:
       - "80:80"       # HTTP (redirects to HTTPS)
       - "443:443"     # HTTPS only
-      - "8090:8080"   # Dashboard (localhost only)
+      - "8080:8080"   # Dashboard
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./traefik/dynamic_conf.yml:/etc/traefik/dynamic_conf.yml
       - traefik-ssl:/letsencrypt
     networks:
       - gibd-network
       - traefik-public
+    environment:
+      - ACME_EMAIL=admin@wizardsofts.com
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.dashboard.rule=Host(`traefik.wizardsofts.com`)"
-      - "traefik.http.routers.dashboard.service=api@internal"
-      - "traefik.http.routers.dashboard.middlewares=admin-auth"
-      - "traefik.http.routers.dashboard.entrypoints=websecure"
-      - "traefik.http.routers.dashboard.tls.certresolver=letsencrypt"
     restart: unless-stopped
 
   # ========================================================================
