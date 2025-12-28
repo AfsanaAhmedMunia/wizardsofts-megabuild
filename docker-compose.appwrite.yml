@@ -579,13 +579,8 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=gibd-network"
 
-      # HTTP Router (redirects to HTTPS)
-      - "traefik.http.routers.appwrite_console_http.rule=(Host(`appwrite.wizardsofts.com`) || Host(`appwrite.bondwala.com`)) && PathPrefix(`/console`)"
-      - "traefik.http.routers.appwrite_console_http.entrypoints=web"
-      - "traefik.http.routers.appwrite_console_http.middlewares=redirect-to-https"
-
-      # HTTPS Router
-      - "traefik.http.routers.appwrite_console_https.rule=(Host(`appwrite.wizardsofts.com`) || Host(`appwrite.bondwala.com`)) && PathPrefix(`/console`)"
+      # HTTPS Router (HTTP auto-redirects via entrypoint config)
+      - "traefik.http.routers.appwrite_console_https.rule=Host(`appwrite.wizardsofts.com`) && PathPrefix(`/console`)"
       - "traefik.http.routers.appwrite_console_https.entrypoints=websecure"
       - "traefik.http.routers.appwrite_console_https.tls=true"
       - "traefik.http.routers.appwrite_console_https.tls.certresolver=letsencrypt"
