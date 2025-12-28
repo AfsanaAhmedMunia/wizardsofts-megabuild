@@ -584,6 +584,7 @@ services:
       - "traefik.http.routers.appwrite_console_https.entrypoints=websecure"
       - "traefik.http.routers.appwrite_console_https.tls=true"
       - "traefik.http.routers.appwrite_console_https.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.appwrite_console_https.priority=100"
 
       # Service
       - "traefik.http.services.appwrite_console.loadbalancer.server.port=80"
