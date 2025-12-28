@@ -131,6 +131,8 @@ http:
       tls:
         certResolver: letsencrypt
 
+    # NOTE: Appwrite Console routing is configured via Docker labels in docker-compose.appwrite.yml
+
     # ========================================================================
     # INFRASTRUCTURE SERVICES
     # ========================================================================
@@ -337,6 +339,8 @@ http:
       loadBalancer:
         servers:
           - url: "http://appwrite-realtime:80"
+
+    # NOTE: appwrite-console service is auto-discovered via Docker labels
 
 # ============================================================================
 # TCP ROUTERS (for TLS passthrough)

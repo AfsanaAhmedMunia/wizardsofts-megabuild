@@ -574,11 +574,10 @@ services:
     restart: unless-stopped
     networks:
       - appwrite
-      - traefik-public
+      - gibd-network
     labels:
       - "traefik.enable=true"
-      - "traefik.constraint-label-stack=appwrite"
-      - "traefik.docker.network=traefik-public"
+      - "traefik.docker.network=gibd-network"
 
       # HTTP Router (redirects to HTTPS)
       - "traefik.http.routers.appwrite_console_http.rule=(Host(`appwrite.wizardsofts.com`) || Host(`appwrite.bondwala.com`)) && PathPrefix(`/console`)"
