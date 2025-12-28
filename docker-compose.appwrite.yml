@@ -26,6 +26,8 @@ networks:
     external: true
   traefik-public:
     external: true
+  microservices-overlay:
+    external: true
 
 volumes:
   appwrite-mariadb:
@@ -574,10 +576,10 @@ services:
     restart: unless-stopped
     networks:
       - appwrite
-      - gibd-network
+      - microservices-overlay
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=gibd-network"
+      - "traefik.docker.network=microservices-overlay"
 
       # HTTPS Router (HTTP auto-redirects via entrypoint config)
       - "traefik.http.routers.appwrite_console_https.rule=Host(`appwrite.wizardsofts.com`) && PathPrefix(`/console`)"
