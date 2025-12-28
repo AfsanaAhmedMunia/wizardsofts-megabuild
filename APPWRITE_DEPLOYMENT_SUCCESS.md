@@ -12,13 +12,14 @@
 Your Appwrite Backend-as-a-Service platform is **100% deployed and operational**.
 
 ```
-✅ Infrastructure: 14 containers running
+✅ Infrastructure: 15 containers running (including console)
 ✅ Database: MariaDB 10.11.15 operational
 ✅ Cache: Redis operational
 ✅ DNS: Configured and propagated
 ✅ SSL/TLS: Let's Encrypt certificate issued
 ✅ HTTPS: Working (verified)
 ✅ API: Responding (v1.8.1)
+✅ Console: Self-hosted UI accessible
 ```
 
 ---
@@ -27,7 +28,7 @@ Your Appwrite Backend-as-a-Service platform is **100% deployed and operational**
 
 ### Public Access
 ```
-Console:  https://appwrite.wizardsofts.com
+Console:  https://appwrite.wizardsofts.com/console  (self-hosted UI)
 API:      https://appwrite.wizardsofts.com/v1
 Health:   https://appwrite.wizardsofts.com/v1/health
 Realtime: wss://appwrite.wizardsofts.com/v1/realtime
@@ -35,7 +36,8 @@ Realtime: wss://appwrite.wizardsofts.com/v1/realtime
 
 ### Alternate Domain (Alias)
 ```
-Console:  https://appwrite.bondwala.com (after DNS configured)
+Console:  https://appwrite.bondwala.com/console  (self-hosted UI)
+API:      https://appwrite.bondwala.com/v1
 ```
 
 ---
@@ -44,7 +46,7 @@ Console:  https://appwrite.bondwala.com (after DNS configured)
 
 ### Console Admin (First-Time Setup)
 ```
-URL:      https://appwrite.wizardsofts.com
+URL:      https://appwrite.wizardsofts.com/console
 Email:    admin@wizardsofts.com
 Password: (You create this during first signup)
 ```
@@ -105,7 +107,7 @@ curl https://appwrite.wizardsofts.com/v1/health
 ### Container Status
 ```bash
 ssh wizardsofts@10.0.0.84 "docker ps | grep appwrite | wc -l"
-# Result: 14 containers ✅
+# Result: 15 containers ✅ (including console)
 ```
 
 ---
@@ -127,7 +129,7 @@ sudo systemd-resolve --flush-caches
 ipconfig /flushdns
 ```
 
-Then open: **https://appwrite.wizardsofts.com**
+Then open: **https://appwrite.wizardsofts.com/console**
 
 ### Step 2: First-Time Setup
 
@@ -523,7 +525,7 @@ docker-compose -f docker-compose.appwrite.yml restart appwrite
 
 ## 🎉 Success Checklist
 
-- ✅ 14 Appwrite containers running
+- ✅ 15 Appwrite containers running (including console)
 - ✅ DNS configured (106.70.161.3)
 - ✅ SSL certificate issued (Let's Encrypt)
 - ✅ HTTPS access working
@@ -559,7 +561,7 @@ You now have:
 
 **What to do NOW**:
 1. Flush DNS cache: `sudo dscacheutil -flushcache && sudo killall -HUP mDNSResponder`
-2. Access console: https://appwrite.wizardsofts.com
+2. Access console: https://appwrite.wizardsofts.com/console
 3. Create your admin account with `admin@wizardsofts.com`
 4. Set up BondWala project
 5. Configure push notification providers

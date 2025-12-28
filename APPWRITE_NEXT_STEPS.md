@@ -6,11 +6,12 @@
 
 ## What You Have Right Now
 
-14 Appwrite containers running and healthy:
+15 Appwrite containers running and healthy:
 - Main API server
+- Self-hosted console UI
 - Realtime WebSocket server
 - 10 background workers (messaging, webhooks, etc.)
-- MariaDB database (credentials: wizardsofts / W1z4rdS0fts!2025)
+- MariaDB database (credentials: wizardsofts / W1z4rdS0fts2025Secure)
 - Redis cache
 
 ---
@@ -50,7 +51,7 @@ docker ps | grep traefik
 
 Once DNS and Traefik are ready:
 
-1. Go to: **https://appwrite.wizardsofts.com**
+1. Go to: **https://appwrite.wizardsofts.com/console**
 2. Sign up with: **admin@wizardsofts.com**
 3. Create a password
 4. Create the **BondWala** project
@@ -201,7 +202,7 @@ crontab -e
 | Messaging Worker | ✅ Running | Push notifications ready |
 | Traefik | ⏳ Pending | Deploy from docker-compose.yml |
 | DNS | ⏳ Pending | Configure A records |
-| Console | ⏳ Pending | Accessible after DNS + Traefik |
+| Console | ✅ Running | Self-hosted at /console |
 | APNs Provider | ⏳ Pending | Configure in console |
 | FCM Provider | ⏳ Pending | Configure in console |
 | Backend Integration | ⏳ Pending | SDK installation |

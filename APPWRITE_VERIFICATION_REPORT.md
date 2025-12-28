@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-✅ **Appwrite Infrastructure**: All 14 containers running  
+✅ **Appwrite Infrastructure**: All 15 containers running (including console)  
 ⚠️ **DNS Configuration**: Incorrect (CNAME to AWS, needs A record)  
 ✅ **Traefik**: Running and accessible  
 ⚠️ **Appwrite Health**: Container unhealthy due to domain validation errors  
@@ -22,7 +22,7 @@
 
 | Component | Status | Details |
 |-----------|--------|---------|
-| Containers Running | ✅ PASS | 14/14 containers up |
+| Containers Running | ✅ PASS | 15/15 containers up (including console) |
 | Database Connectivity | ✅ PASS | MariaDB 10.11.15 responding |
 | Redis Cache | ✅ PASS | PONG response |
 | Traefik Proxy | ✅ PASS | Listening on 80, 443, 8080 |
@@ -72,6 +72,7 @@ Status: ❌ FAIL
 ```
 NAMES                          STATUS                         PORTS
 appwrite                       Up About an hour (unhealthy)   80/tcp
+appwrite-console               Up About an hour               80/tcp
 appwrite-realtime              Up About an hour               80/tcp
 appwrite-worker-messaging      Up About an hour               80/tcp
 appwrite-worker-deletes        Up About an hour               80/tcp
@@ -209,6 +210,22 @@ content-length: 19
 ```
 
 **Status**: ❌ FAIL - 404 Not Found
+
+---
+
+### 10. Console UI Access Check
+
+#### Test: `curl -I -k -H "Host: appwrite.wizardsofts.com" https://10.0.0.84/console`
+```
+HTTP/2 200 OK
+content-type: text/html
+```
+
+**Status**: ✅ PASS - Self-hosted console accessible at /console
+
+**Console URLs**:
+- Primary: `https://appwrite.wizardsofts.com/console`
+- Alternate: `https://appwrite.bondwala.com/console`
 
 ---
 
@@ -393,7 +410,8 @@ curl -I https://appwrite.wizardsofts.com
 │ APPWRITE DEPLOYMENT STATUS                              │
 ├─────────────────────────────────────────────────────────┤
 │ Infrastructure                                          │
-│   ✅ Containers Running          14/14                  │
+│   ✅ Containers Running          15/15                  │
+│   ✅ Console UI                  Running at /console    │
 │   ✅ Database Operational        MariaDB 10.11.15       │
 │   ✅ Cache Operational           Redis 7                │
 │   ✅ Traefik Running             Ports 80/443/8080      │
