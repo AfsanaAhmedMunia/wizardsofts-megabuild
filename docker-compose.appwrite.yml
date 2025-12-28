@@ -564,6 +564,45 @@ services:
       - _APP_USAGE_STATS=${_APP_USAGE_STATS:-enabled}
 
   # ==========================================================================
+  # CONSOLE UI (Self-Hosted Web Interface)
+  # ==========================================================================
+
+  appwrite-console:
+    image: appwrite/console:7.4.11
+    container_name: appwrite-console
+    <<: *x-logging
+    restart: unless-stopped
+    networks:
+      - appwrite
+      - traefik-public
+    labels:
+      - "traefik.enable=true"
+      - "traefik.constraint-label-stack=appwrite"
+      - "traefik.docker.network=traefik-public"
+
+      # HTTP Router (redirects to HTTPS)
+      - "traefik.http.routers.appwrite_console_http.rule=(Host(`appwrite.wizardsofts.com`) || Host(`appwrite.bondwala.com`)) && PathPrefix(`/console`)"
+      - "traefik.http.routers.appwrite_console_http.entrypoints=web"
+      - "traefik.http.routers.appwrite_console_http.middlewares=redirect-to-https"
+
+      # HTTPS Router
+      - "traefik.http.routers.appwrite_console_https.rule=(Host(`appwrite.wizardsofts.com`) || Host(`appwrite.bondwala.com`)) && PathPrefix(`/console`)"
+      - "traefik.http.routers.appwrite_console_https.entrypoints=websecure"
+      - "traefik.http.routers.appwrite_console_https.tls=true"
+      - "traefik.http.routers.appwrite_console_https.tls.certresolver=letsencrypt"
+
+      # Service
+      - "traefik.http.services.appwrite_console.loadbalancer.server.port=80"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M
+        reservations:
+          cpus: '0.25'
+          memory: 64M
+
+  # ==========================================================================
   # DATABASE - MariaDB
   # ==========================================================================
 
