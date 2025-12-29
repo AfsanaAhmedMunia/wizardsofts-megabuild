@@ -1,11 +1,11 @@
 services:
-  ollama:
+  ollama-local:
     image: docker.io/ollama/ollama:latest
     ports:
-      - "11434:11434"
+      - "127.0.0.1:11435:11434"  # Localhost-only access, port 11435 to avoid HAProxy conflict
     volumes:
-      - ./ollama-data:/root/.ollama
-    container_name: ollama
+      - ollama-data:/root/.ollama  # Named volume for better portability
+    container_name: ollama-local
     restart: always
     environment:
       - OLLAMA_KEEP_ALIVE=24h
@@ -16,6 +16,9 @@ services:
       timeout: 10s
       retries: 2
       start_period: 30s
+
+volumes:
+  ollama-data:
 
 networks:
   default:

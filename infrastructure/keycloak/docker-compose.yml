@@ -19,15 +19,17 @@ services:
     container_name: keycloak
     command: start-dev
     restart: unless-stopped
+    ports:
+      - "127.0.0.1:8180:8080"  # Localhost-only access (use Traefik for external)
     environment:
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
       KC_DB_USERNAME: keycloak
-      KC_DB_PASSWORD: password123
-      KC_BOOTSTRAP_ADMIN_USERNAME: admin
-      KC_BOOTSTRAP_ADMIN_PASSWORD: Keycl0ak!Admin2025
+      KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD}
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
       KC_PROXY: edge
-      KC_HOSTNAME_STRICT: "false" # Relaxed for initial setup behind Traefik
+      KC_HOSTNAME_STRICT: "false"  # Relaxed for initial setup
       KC_HTTP_ENABLED: "true"
       KC_METRICS_ENABLED: "true"
       KC_HEALTH_ENABLED: "true"

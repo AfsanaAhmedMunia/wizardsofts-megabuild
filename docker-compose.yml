@@ -17,8 +17,9 @@ services:
     environment:
       - POSTGRES_USER=gibd
       - POSTGRES_PASSWORD=${DB_PASSWORD}
-    ports:
-      - "5433:5432"
+    # Port exposed only for SSH tunnel access (security: localhost-only)
+    # ports:
+    #   - "5433:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
     networks:
@@ -32,8 +33,9 @@ services:
   redis:
     image: redis:7-alpine
     profiles: ["shared", "gibd-quant", "all"]
-    ports:
-      - "6379:6379"
+    # Port exposed only for SSH tunnel access (security: localhost-only)
+    # ports:
+    #   - "6379:6379"
     networks:
       - gibd-network
     healthcheck:
@@ -53,7 +55,7 @@ services:
     profiles: ["shared", "gibd-quant", "all"]
     container_name: ws-discovery
     ports:
-      - "8762:8761"
+      - "127.0.0.1:8762:8761"  # Localhost-only access
     environment:
       - SPRING_PROFILES_ACTIVE=docker
     networks:
@@ -71,7 +73,7 @@ services:
     profiles: ["shared", "gibd-quant", "all"]
     container_name: ws-gateway
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8081:8080"  # Localhost-only access on port 8081
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://ws-discovery:8761/eureka/
@@ -97,7 +99,7 @@ services:
     profiles: ["shared", "gibd-quant", "all"]
     container_name: ws-trades
     ports:
-      - "8182:8182"
+      - "127.0.0.1:8182:8182"  # Localhost-only access
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/ws_gibd_dse_daily_trades
@@ -124,7 +126,7 @@ services:
     profiles: ["shared", "gibd-quant", "all"]
     container_name: ws-company
     ports:
-      - "8183:8183"
+      - "127.0.0.1:8183:8183"  # Localhost-only access
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/ws_gibd_dse_company_info
@@ -151,7 +153,7 @@ services:
     profiles: ["shared", "gibd-quant", "all"]
     container_name: ws-news
     ports:
-      - "8184:8184"
+      - "127.0.0.1:8184:8184"  # Localhost-only access
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://ws-discovery:8761/eureka/
@@ -177,7 +179,7 @@ services:
     profiles: ["gibd-quant", "all"]
     container_name: gibd-quant-signal
     ports:
-      - "5001:5001"
+      - "127.0.0.1:5001:5001"  # Localhost-only access
     environment:
       - DATABASE_URL=postgresql://gibd:${DB_PASSWORD}@postgres:5432/ws_gibd_dse_daily_trades
       - EUREKA_SERVER=http://ws-discovery:8761/eureka/
