@@ -504,11 +504,15 @@ services:
       - _APP_DB_PASS=${_APP_DB_PASS}
       - _APP_USAGE_STATS=${_APP_USAGE_STATS:-enabled}
 
-  appwrite-schedule:
+  # ==========================================================================
+  # TASK SCHEDULERS (Background Job Scheduling)
+  # ==========================================================================
+
+  appwrite-task-scheduler-functions:
     image: appwrite/appwrite:1.8.1
-    container_name: appwrite-schedule
+    container_name: appwrite-task-scheduler-functions
     <<: *x-logging
-    entrypoint: schedule
+    entrypoint: schedule-functions
     restart: unless-stopped
     networks:
       - appwrite
@@ -527,6 +531,140 @@ services:
       - _APP_DB_SCHEMA=${_APP_DB_SCHEMA:-appwrite}
       - _APP_DB_USER=${_APP_DB_USER:-appwrite}
       - _APP_DB_PASS=${_APP_DB_PASS}
+
+  appwrite-task-scheduler-executions:
+    image: appwrite/appwrite:1.8.1
+    container_name: appwrite-task-scheduler-executions
+    <<: *x-logging
+    entrypoint: schedule-executions
+    restart: unless-stopped
+    networks:
+      - appwrite
+    depends_on:
+      - appwrite-redis
+      - appwrite-mariadb
+    environment:
+      - _APP_ENV=${_APP_ENV:-production}
+      - _APP_OPENSSL_KEY_V1=${_APP_OPENSSL_KEY_V1}
+      - _APP_REDIS_HOST=${_APP_REDIS_HOST:-appwrite-redis}
+      - _APP_REDIS_PORT=${_APP_REDIS_PORT:-6379}
+      - _APP_REDIS_USER=${_APP_REDIS_USER:-}
+      - _APP_REDIS_PASS=${_APP_REDIS_PASS:-}
+      - _APP_DB_HOST=${_APP_DB_HOST:-appwrite-mariadb}
+      - _APP_DB_PORT=${_APP_DB_PORT:-3306}
+      - _APP_DB_SCHEMA=${_APP_DB_SCHEMA:-appwrite}
+      - _APP_DB_USER=${_APP_DB_USER:-appwrite}
+      - _APP_DB_PASS=${_APP_DB_PASS}
+
+  appwrite-task-scheduler-messages:
+    image: appwrite/appwrite:1.8.1
+    container_name: appwrite-task-scheduler-messages
+    <<: *x-logging
+    entrypoint: schedule-messages
+    restart: unless-stopped
+    networks:
+      - appwrite
+    depends_on:
+      - appwrite-redis
+      - appwrite-mariadb
+    environment:
+      - _APP_ENV=${_APP_ENV:-production}
+      - _APP_OPENSSL_KEY_V1=${_APP_OPENSSL_KEY_V1}
+      - _APP_REDIS_HOST=${_APP_REDIS_HOST:-appwrite-redis}
+      - _APP_REDIS_PORT=${_APP_REDIS_PORT:-6379}
+      - _APP_REDIS_USER=${_APP_REDIS_USER:-}
+      - _APP_REDIS_PASS=${_APP_REDIS_PASS:-}
+      - _APP_DB_HOST=${_APP_DB_HOST:-appwrite-mariadb}
+      - _APP_DB_PORT=${_APP_DB_PORT:-3306}
+      - _APP_DB_SCHEMA=${_APP_DB_SCHEMA:-appwrite}
+      - _APP_DB_USER=${_APP_DB_USER:-appwrite}
+      - _APP_DB_PASS=${_APP_DB_PASS}
+
+  appwrite-worker-stats-resources:
+    image: appwrite/appwrite:1.8.1
+    container_name: appwrite-worker-stats-resources
+    <<: *x-logging
+    entrypoint: worker-stats-resources
+    restart: unless-stopped
+    networks:
+      - appwrite
+    depends_on:
+      - appwrite-redis
+      - appwrite-mariadb
+    environment:
+      - _APP_ENV=${_APP_ENV:-production}
+      - _APP_OPENSSL_KEY_V1=${_APP_OPENSSL_KEY_V1}
+      - _APP_REDIS_HOST=${_APP_REDIS_HOST:-appwrite-redis}
+      - _APP_REDIS_PORT=${_APP_REDIS_PORT:-6379}
+      - _APP_REDIS_USER=${_APP_REDIS_USER:-}
+      - _APP_REDIS_PASS=${_APP_REDIS_PASS:-}
+      - _APP_DB_HOST=${_APP_DB_HOST:-appwrite-mariadb}
+      - _APP_DB_PORT=${_APP_DB_PORT:-3306}
+      - _APP_DB_SCHEMA=${_APP_DB_SCHEMA:-appwrite}
+      - _APP_DB_USER=${_APP_DB_USER:-appwrite}
+      - _APP_DB_PASS=${_APP_DB_PASS}
+      - _APP_USAGE_STATS=${_APP_USAGE_STATS:-enabled}
+
+  # ==========================================================================
+  # SERVERLESS FUNCTIONS (Executor & Worker)
+  # ==========================================================================
+
+  appwrite-executor:
+    image: openruntimes/executor:0.11.4
+    container_name: appwrite-executor
+    <<: *x-logging
+    restart: unless-stopped
+    networks:
+      - appwrite
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - appwrite-builds:/storage/builds:rw
+      - appwrite-functions:/storage/functions:rw
+      - /tmp:/tmp:rw
+    environment:
+      - OPR_EXECUTOR_INACTIVE_TRESHOLD=60
+      - OPR_EXECUTOR_NETWORK=appwrite
+      - OPR_EXECUTOR_ENV=${_APP_ENV:-production}
+      - OPR_EXECUTOR_SECRET=${_APP_EXECUTOR_SECRET}
+      - OPR_EXECUTOR_LOGGING_CONFIG=${_APP_LOGGING_CONFIG:-}
+      - OPR_EXECUTOR_STORAGE_DEVICE=local
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
+
+  appwrite-worker-functions:
+    image: appwrite/appwrite:1.8.1
+    container_name: appwrite-worker-functions
+    <<: *x-logging
+    entrypoint: worker-functions
+    restart: unless-stopped
+    networks:
+      - appwrite
+    depends_on:
+      - appwrite-redis
+      - appwrite-mariadb
+      - appwrite-executor
+    environment:
+      - _APP_ENV=${_APP_ENV:-production}
+      - _APP_OPENSSL_KEY_V1=${_APP_OPENSSL_KEY_V1}
+      - _APP_DOMAIN=${_APP_DOMAIN:-localhost}
+      - _APP_OPTIONS_FORCE_HTTPS=${_APP_OPTIONS_FORCE_HTTPS:-enabled}
+      - _APP_REDIS_HOST=${_APP_REDIS_HOST:-appwrite-redis}
+      - _APP_REDIS_PORT=${_APP_REDIS_PORT:-6379}
+      - _APP_REDIS_USER=${_APP_REDIS_USER:-}
+      - _APP_REDIS_PASS=${_APP_REDIS_PASS:-}
+      - _APP_DB_HOST=${_APP_DB_HOST:-appwrite-mariadb}
+      - _APP_DB_PORT=${_APP_DB_PORT:-3306}
+      - _APP_DB_SCHEMA=${_APP_DB_SCHEMA:-appwrite}
+      - _APP_DB_USER=${_APP_DB_USER:-appwrite}
+      - _APP_DB_PASS=${_APP_DB_PASS}
+      - _APP_EXECUTOR_SECRET=${_APP_EXECUTOR_SECRET}
+      - _APP_EXECUTOR_HOST=${_APP_EXECUTOR_HOST:-http://appwrite-executor/v1}
 
   # ==========================================================================
   # REALTIME SERVICE (For Live Updates)
