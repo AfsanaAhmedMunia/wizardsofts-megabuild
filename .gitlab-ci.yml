@@ -371,7 +371,7 @@ deploy-web-apps:
         if [ -d "apps/$service" ]; then
           echo "Syncing $service..."
           mkdir -p /home/wizardsofts/apps/$service
-          rsync -av --exclude 'node_modules' --exclude '.next' apps/$service/ /home/wizardsofts/apps/$service/
+          rsync -rlt --exclude 'node_modules' --exclude '.next' apps/$service/ /home/wizardsofts/apps/$service/
         fi
       done
 
