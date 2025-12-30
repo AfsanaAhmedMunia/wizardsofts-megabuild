@@ -299,7 +299,8 @@ export default function BondWalaPage() {
             <div className="mt-4 text-gray-600">Stay tuned for updates!</div>
           </div>
 
-          {/* Download links hidden until release
+          {/* Download links hidden until release */}
+          {/*
           <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:justify-center">
             <a
               href="https://play.google.com/store"
@@ -320,7 +321,7 @@ export default function BondWalaPage() {
               <div>App Store</div>
             </a>
           </div>
-          -->
+          */}
 
         </div>
       </section>
