@@ -479,11 +479,11 @@ services:
       - _APP_MAINTENANCE_RETENTION_AUDIT=${_APP_MAINTENANCE_RETENTION_AUDIT:-1209600}
       - _APP_MAINTENANCE_RETENTION_USAGE_HOURLY=${_APP_MAINTENANCE_RETENTION_USAGE_HOURLY:-8640000}
 
-  appwrite-usage:
+  appwrite-worker-stats-usage:
     image: appwrite/appwrite:1.8.1
-    container_name: appwrite-usage
+    container_name: appwrite-worker-stats-usage
     <<: *x-logging
-    entrypoint: worker-usage
+    entrypoint: worker-stats-usage
     restart: unless-stopped
     networks:
       - appwrite
