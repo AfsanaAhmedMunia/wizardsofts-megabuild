@@ -577,6 +577,9 @@ services:
     networks:
       - appwrite
       - microservices-overlay
+    # NOTE: Volume mount disabled due to Docker Snap read-only filesystem restrictions
+    # env.js must be copied manually after container starts:
+    # docker cp /opt/wizardsofts-megabuild/traefik/console-env.js appwrite-console:/usr/share/nginx/html/console/_app/env.js
     environment:
       - _APP_ENDPOINT=https://appwrite.wizardsofts.com/v1
       - _APP_DOMAIN=appwrite.wizardsofts.com
@@ -639,19 +642,19 @@ services:
       --innodb-file-per-table=ON
       --character-set-server=utf8mb4
       --collation-server=utf8mb4_unicode_ci
-      --max-connections=500
-      --innodb-buffer-pool-size=512M
-      --slow-query-log=ON
-      --long-query-time=2
-      --log-queries-not-using-indexes=ON
+      --max-connections=100
+      --innodb-buffer-pool-size=128M
+      --slow-query-log=OFF
+      --performance-schema=OFF
+      --skip-log-bin
     deploy:
       resources:
         limits:
-          cpus: '2'
-          memory: 2G
-        reservations:
           cpus: '1'
-          memory: 1G
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${_APP_DB_ROOT_PASS}"]
       interval: 10s
