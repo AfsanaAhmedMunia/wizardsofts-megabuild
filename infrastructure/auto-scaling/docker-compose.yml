@@ -75,6 +75,7 @@ services:
       - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
     networks:
       - autoscaler
+      - microservices-overlay
     user: "472:472"
     healthcheck:
       test: ["CMD", "wget", "--spider", "http://localhost:3000/api/health"]
