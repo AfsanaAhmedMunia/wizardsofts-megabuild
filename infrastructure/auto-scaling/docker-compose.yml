@@ -67,10 +67,8 @@ services:
     ports:
       - "3002:3000"
     volumes:
-      - ./monitoring/grafana_data:/var/lib/grafana
-      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
-      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
-      - ./monitoring/grafana/grafana.ini:/etc/grafana/grafana.ini:ro
+      - grafana-data:/var/lib/grafana
+      - ~/grafana-config/grafana.ini:/etc/grafana/grafana.ini:ro
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD}
       - GF_USERS_ALLOW_SIGN_UP=false
@@ -104,6 +102,9 @@ services:
     networks:
       - autoscaler
     restart: unless-stopped
+
+volumes:
+  grafana-data:
 
 networks:
   autoscaler:
