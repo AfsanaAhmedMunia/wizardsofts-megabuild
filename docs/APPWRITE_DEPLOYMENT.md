@@ -1,9 +1,9 @@
 # Appwrite Deployment Guide for WizardSofts
 
-> **Version:** 1.0
+> **Version:** 1.1
 > **Appwrite Version:** 1.8.1
-> **Last Updated:** 2025-12-27
-> **Status:** Ready for Deployment
+> **Last Updated:** 2025-12-30
+> **Status:** Deployed & Operational
 > **Shared Service:** BondWala, GIBD, and future WizardSofts projects
 
 ---
@@ -671,9 +671,88 @@ SSL Certificate:
 
 ---
 
+## Deployment Retrospective (2025-12-30)
+
+### Issues Encountered & Resolutions
+
+#### 1. Invalid Container Entrypoints
+**Problem:** Original `appwrite-schedule` service used invalid entrypoint `schedule` which doesn't exist in Appwrite 1.8.1.
+
+**Solution:** Replaced with three proper task scheduler services:
+- `appwrite-task-scheduler-functions` (entrypoint: `schedule-functions`)
+- `appwrite-task-scheduler-executions` (entrypoint: `schedule-executions`)
+- `appwrite-task-scheduler-messages` (entrypoint: `schedule-messages`)
+
+Added missing services:
+- `appwrite-worker-stats-resources` (entrypoint: `worker-stats-resources`)
+- `appwrite-worker-functions` (entrypoint: `worker-functions`)
+- `appwrite-executor` (OpenRuntimes executor for serverless functions)
+
+#### 2. Container Permission Errors
+**Problem:** MariaDB, Redis, and Appwrite containers failed with "exec: operation not permitted" due to restrictive security settings.
+
+**Solution:** Removed overly restrictive security settings from affected services:
+- Removed `user: "999:999"` and `user: "www-data"`
+- Removed `security_opt: - no-new-privileges:true`
+- Removed `cap_drop: - ALL` and `cap_add` restrictions
+
+> **Note:** These security settings are best practices but may conflict with Docker Snap installations. Test in your environment.
+
+#### 3. Console 500 Error on `/v1/console/variables`
+**Problem:** Console returned 500 error with `TypeError: Domain::__construct(): Argument #1 ($domain) must be of type string, null given`.
+
+**Root Cause:** Missing `_APP_DOMAIN_TARGET_CNAME` environment variable.
+
+**Solution:** Added to docker-compose.appwrite.yml:
+```yaml
+- _APP_DOMAIN_TARGET_CNAME=${_APP_DOMAIN_TARGET_CNAME:-appwrite.wizardsofts.com}
+```
+
+#### 4. Environment File Format Issues
+**Problem:** Docker-compose wasn't loading variables from `.env.appwrite` due to comment lines.
+
+**Solution:** Clean the env file by removing comments:
+```bash
+grep -v '^#' .env.appwrite | grep -v '^$' | grep '=' > .env.appwrite.clean
+mv .env.appwrite .env.appwrite.backup
+mv .env.appwrite.clean .env.appwrite
+```
+
+### Current Production Configuration
+
+| Setting | Value |
+|---------|-------|
+| Domain | appwrite.wizardsofts.com |
+| Console URL | https://appwrite.wizardsofts.com/console |
+| Admin Email | admin@wizardsofts.com |
+| Signup Restriction | Enabled (whitelist only) |
+| Total Services | 22 containers |
+
+### Git Commits for This Deployment
+
+| Commit | Description |
+|--------|-------------|
+| `074c8fd` | Fixed all worker and scheduler service entrypoints |
+| `5e3f3ec` | Removed restrictive security settings from MariaDB/Redis |
+| `6a836c3` | Removed security restrictions from all containers |
+| `90e348b` | Allow first user signup by disabling console whitelist |
+| `6811022` | Added `_APP_DOMAIN_TARGET_CNAME` to fix console 500 error |
+| `fa6e265` | Enabled console signup whitelist by default |
+
+### Lessons Learned
+
+1. **Always verify entrypoints** against official Appwrite docker-compose for your version
+2. **Test security restrictions** in your specific Docker environment before applying
+3. **Environment files** should be clean (no comments) for docker-compose `--env-file`
+4. **Missing env vars** like `_APP_DOMAIN_TARGET_CNAME` can cause cryptic 500 errors
+5. **Use `docker-compose rm -f && up -d`** instead of just `restart` when changing env vars
+
+---
+
 ## References
 
 - [Appwrite Documentation](https://appwrite.io/docs)
 - [Appwrite Self-Hosting Guide](https://appwrite.io/docs/advanced/self-hosting)
 - [Appwrite Messaging API](https://appwrite.io/docs/references/cloud/server-nodejs/messaging)
 - [Traefik Documentation](https://doc.traefik.io/traefik/)
+- [Appwrite GitHub Issues](https://github.com/appwrite/appwrite/issues) - for troubleshooting
