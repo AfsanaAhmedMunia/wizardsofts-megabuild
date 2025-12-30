@@ -35,6 +35,9 @@ All contributors and automation (including Copilot) must adhere to the following
 8. **Healthchecks and Monitoring**
    - Implement healthchecks for all critical services.
    - Monitor logs and container health.
+   - **CRITICAL**: Health check ports MUST match the service's configured listening port.
+     - Example: If `external_url` is `http://host:8090`, health check must use `localhost:8090`
+     - Default health checks often assume port 80; always verify when using non-standard ports.
 
 9. **Firewall and Access Controls**
    - Restrict host firewall (UFW/iptables) to allow only trusted IPs.
