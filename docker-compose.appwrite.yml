@@ -578,7 +578,7 @@ services:
       - appwrite
       - microservices-overlay
     volumes:
-      - ./traefik/console-env.js:/usr/share/nginx/html/console/_app/env.js:ro
+      - /opt/wizardsofts-megabuild/traefik/console-env.js:/usr/share/nginx/html/console/_app/env.js:ro
     environment:
       - _APP_ENDPOINT=https://appwrite.wizardsofts.com/v1
       - _APP_DOMAIN=appwrite.wizardsofts.com
