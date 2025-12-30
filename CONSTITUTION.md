@@ -461,6 +461,88 @@ pytest tests/
 
 ## 🔐 Security Standards
 
+### Network Security & Port Binding
+
+**CRITICAL RULE**: **ALL service ports MUST be bound to localhost (127.0.0.1) unless explicitly required for external access.**
+
+**Port Binding Categories**:
+
+1. **Public Internet Access** (0.0.0.0 binding allowed):
+   - 22 (SSH)
+   - 25 (SMTP)
+   - 80 (HTTP/Traefik)
+   - 443 (HTTPS/Traefik)
+   - Mail ports (465, 587, 993, 995, 143, 110)
+
+2. **Private Network Access** (0.0.0.0 + UFW firewall rules REQUIRED):
+   - 3002 (Grafana)
+   - 8080 (Traefik Dashboard)
+   - 8180 (Keycloak Admin)
+   - 8762 (Eureka)
+   - 9090 (Prometheus)
+   - 4000 (Appwrite Console)
+
+3. **Localhost ONLY** (127.0.0.1 binding REQUIRED):
+   - 8081 (API Gateway - internal)
+   - 8182-8184 (Business services - internal)
+   - 11435 (Ollama - internal)
+   - 5433 (PostgreSQL - MUST be localhost)
+   - 6379 (Redis - MUST be localhost)
+   - 3000, 3001 (Web apps - access via Traefik only)
+   - 5001-5004 (Python ML services - internal)
+
+**UFW Firewall Configuration** (for Private Network Access):
+
+```bash
+# Template for private network admin ports
+ufw allow from 10.0.0.0/8 to any port <PORT> comment "<Service Name>"
+ufw allow from 172.16.0.0/12 to any port <PORT>
+ufw allow from 192.168.0.0/16 to any port <PORT>
+
+# Example: Keycloak Admin
+ufw allow from 10.0.0.0/8 to any port 8180 comment "Keycloak Admin"
+ufw allow from 172.16.0.0/12 to any port 8180
+ufw allow from 192.168.0.0/16 to any port 8180
+
+# Default deny all other incoming
+ufw default deny incoming
+ufw default allow outgoing
+ufw enable
+```
+
+**Docker Compose Port Binding**:
+
+```yaml
+# WRONG - Database exposed to 0.0.0.0
+services:
+  postgres:
+    ports:
+      - "5433:5432"  # ❌ INSECURE
+
+# CORRECT - Database bound to localhost only
+services:
+  postgres:
+    ports:
+      - "127.0.0.1:5433:5432"  # ✅ SECURE
+```
+
+**Verification Commands**:
+```bash
+# Check port bindings
+netstat -tlnp | grep LISTEN
+
+# Verify UFW rules
+ufw status numbered
+
+# Expected output for secure setup:
+# - PostgreSQL: 127.0.0.1:5433
+# - Redis: 127.0.0.1:6379
+# - Gateway: 127.0.0.1:8081
+# - Admin ports: 0.0.0.0 but UFW restricted
+```
+
+---
+
 ### Docker Security Hardening
 
 All contributors and automation must adhere to the following security hardening checklist for Docker and service deployment:
@@ -505,6 +587,17 @@ All contributors and automation must adhere to the following security hardening 
     - Regularly audit Docker Compose files, images, and running containers
     - Remove unused containers, images, and volumes
 
+11. **Keycloak as Central Identity Provider** ⚠️ **MANDATORY FOR ALL ADMIN INTERFACES**
+    - **Keycloak MUST be used** as the central authentication provider for ALL administrative interfaces
+    - Single Sign-On (SSO) is REQUIRED for all admin services
+    - Supported authentication methods:
+      - **Native OIDC/OAuth2 integration** (preferred for services like Grafana)
+      - **Traefik Forward Auth via OAuth2 Proxy** (for services without native OIDC)
+    - Administrative user `mashfiqur.rahman` must have access to all services
+    - Multi-Factor Authentication (MFA) should be enabled for administrative accounts
+    - Session timeouts and security policies are managed centrally in Keycloak
+    - **Before deploying any new admin interface**, it MUST be integrated with Keycloak
+
 ---
 
 ### API Security
@@ -539,13 +632,31 @@ All contributors and automation must adhere to the following security hardening 
 
 ## 🚀 Deployment Standards
 
-### GitLab CI/CD Pipeline
+### GitLab CI/CD Pipeline - MANDATORY
+
+**CRITICAL RULE**: **ALL deployments MUST go through GitLab CI/CD pipeline. SSH-based manual deployments are STRICTLY PROHIBITED.**
+
+**Prohibited Actions**:
+- ❌ **NEVER** SSH into production servers to run `docker-compose` commands
+- ❌ **NEVER** manually deploy services via SSH (except for fixing CI/CD itself)
+- ❌ **NEVER** run `docker-compose up/down/restart` directly on production
+- ❌ **NEVER** deploy without running tests first
+- ❌ **NEVER** bypass the CI/CD pipeline for "quick fixes"
+- ❌ **NEVER** use SSH for routine deployments
+
+**Required Actions**:
+- ✅ **ALWAYS** push code changes to GitLab repository
+- ✅ **ALWAYS** let CI/CD build and test automatically
+- ✅ **ALWAYS** trigger deployments from GitLab UI (manual trigger)
+- ✅ **ALWAYS** monitor pipeline execution and logs
+- ✅ **ALWAYS** verify health checks pass after deployment
+- ✅ **ALWAYS** use GitLab rollback job if issues occur
 
 **Stages**:
 1. **detect** - Detect changed services
 2. **test** - Run tests for changed services
 3. **build** - Build Docker images
-4. **deploy** - Deploy to production (manual trigger)
+4. **deploy** - Deploy to production (manual trigger via GitLab UI)
 
 **Change Detection**:
 - Only build/test changed services
@@ -554,18 +665,28 @@ All contributors and automation must adhere to the following security hardening 
 **Health Checks**:
 - All services must pass health checks before deployment considered successful
 
+**Exception**: SSH access is ONLY permitted for:
+- Emergency rollbacks when CI/CD is down
+- Debugging CI/CD pipeline failures
+- Infrastructure maintenance (with approval)
+- Server-level configuration changes (UFW, networking, etc.)
+
 ---
 
 ### Rollback Procedure
 
-**Automated Rollback**:
-```bash
-# Via GitLab CI/CD
-# Trigger rollback job (manual)
-```
+**Primary Method - Via GitLab CI/CD (REQUIRED)**:
+1. Navigate to GitLab project: http://10.0.0.80/wizardsofts/wizardsofts-megabuild
+2. Go to CI/CD → Pipelines
+3. Click on "Run Pipeline"
+4. Select the `rollback` job
+5. Trigger manually
+6. Monitor pipeline execution
+7. Verify services are healthy
 
-**Manual Rollback**:
+**Emergency Manual Rollback (ONLY if CI/CD is down)**:
 ```bash
+# ONLY USE IN EMERGENCIES
 ssh deploy@10.0.0.84
 cd /opt/wizardsofts-megabuild
 git reset --hard HEAD~1
@@ -573,6 +694,8 @@ docker compose --profile all down
 docker compose --profile all build
 docker compose --profile all up -d
 ```
+
+**Important**: After emergency manual rollback, create an incident report explaining why CI/CD was unavailable.
 
 ---
 
