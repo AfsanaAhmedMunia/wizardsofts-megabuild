@@ -571,6 +571,48 @@ All contributors and automation must adhere to the following security hardening 
    - Use Docker networks to isolate services
    - Only connect containers to networks they need
 
+   **CRITICAL**: Traefik Network Configuration
+   - **Traefik MUST be connected to ALL networks where backend services run**
+   - Network connections MUST be defined in `docker-compose.yml` (never rely on manual connections)
+   - Required networks for Traefik on 10.0.0.84:
+     - `microservices-overlay` - ALL web applications (ws-wizardsofts-web, pf-padmafoods-web, gibd-quant-web)
+     - `gibd-network` - GIBD microservices
+     - `mailcow-network` - Mailcow services
+     - `traefik-public` - Traefik internal management
+
+   Example Traefik docker-compose.yml:
+   ```yaml
+   services:
+     traefik:
+       networks:
+         - traefik-public
+         - microservices-overlay  # CRITICAL for web apps
+         - gibd-network
+         - mailcow-network
+
+   networks:
+     microservices-overlay:
+       external: true
+     gibd-network:
+       external: true
+     mailcow-network:
+       external: true
+       name: mailcowdockerized_mailcow-network
+   ```
+
+   **Verification after Traefik restart**:
+   ```bash
+   # Check Traefik is on all required networks
+   docker inspect traefik --format '{{range $k, $v := .NetworkSettings.Networks}}{{$k}} {{end}}'
+   # Should show: microservices-overlay gibd-network mailcow-network traefik-public
+
+   # Test routing through Traefik
+   curl -H 'Host: www.wizardsofts.com' http://localhost
+   curl -k -H 'Host: www.wizardsofts.com' https://localhost
+   ```
+
+   **Incident Reference**: See [HTTPS_INCIDENT_RETROSPECTIVE.md](HTTPS_INCIDENT_RETROSPECTIVE.md) - Network Connectivity Incident (Dec 30, 2025)
+
 7. **Least Privilege Principle**
    - Run containers as non-root users where possible
    - Limit container capabilities and privileges

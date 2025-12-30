@@ -400,6 +400,106 @@ See [DNS_HTTPS_STRATEGY.md](DNS_HTTPS_STRATEGY.md) for complete details and impl
 
 ---
 
+## Network Connectivity Incident (December 30, 2025 - 10:40 UTC)
+
+### Incident Report
+**Duration**: ~15 minutes
+**Severity**: Critical (All websites down - HTTP 502/504 errors)
+**Status**: Resolved
+
+### Timeline
+
+#### 10:40 UTC - Incident Reported
+- User reported: "all the websites are down now"
+- Initial investigation showed containers as "healthy" but not accessible
+
+#### 10:41 UTC - Diagnosis
+- Discovered containers showing as "Up (healthy)" but returning errors:
+  - www.wizardsofts.com: HTTP 504 Gateway Timeout
+  - www.mypadmafoods.com: HTTP 504 Gateway Timeout
+  - www.guardianinvestmentbd.com: HTTP 502 Bad Gateway
+- Web apps listening on ports 3000, 3001, 3002 NOT accessible even from localhost on server
+
+#### 10:44 UTC - Root Cause Identified
+- **Root Cause #5: Network Isolation**
+  - Web applications on network: `microservices-overlay`
+  - Traefik on networks: `gibd-network`, `mailcowdockerized_mailcow-network`, `traefik_traefik-public`
+  - **Traefik NOT connected to `microservices-overlay`** where web apps run
+  - Docker network isolation prevented Traefik from routing to backends
+
+#### 10:44 UTC - Immediate Fix
+```bash
+docker network connect microservices-overlay traefik
+```
+- All websites immediately returned HTTP 200 OK
+
+#### 10:45 UTC - Permanent Fix
+- Updated `/home/wizardsofts/traefik/docker-compose.yml`:
+```yaml
+networks:
+  - traefik-public
+  - gibd-network
+  - mailcow-network
+  - microservices-overlay  # ADDED
+```
+- Created timestamped backup: `docker-compose.yml.backup.20251230_104517`
+- Restarted Traefik with `docker-compose down && docker-compose up -d`
+- Verified all websites operational
+
+### Root Cause Analysis
+
+**Why did this happen?**
+1. Traefik's docker-compose.yml did not include `microservices-overlay` network
+2. Network was manually connected during earlier troubleshooting session (09:22 UTC)
+3. Manual connection lost when Traefik was restarted at 09:50 UTC for ACME staging fix
+4. No monitoring/alerting for network connectivity between Traefik and backends
+
+**Why was it not caught earlier?**
+1. Containers reported "healthy" status (internal healthchecks passed)
+2. No end-to-end health monitoring through Traefik
+3. Traefik was restarted for staging certificate fix without verifying full connectivity
+
+### Prevention Measures
+
+1. **Always include all required networks in docker-compose.yml**
+   - Never rely on manual `docker network connect` commands
+   - Document network dependencies
+
+2. **Add validation script to check Traefik network connectivity**
+   ```bash
+   # Check Traefik is on same network as backends
+   docker inspect traefik --format '{{range $k, $v := .NetworkSettings.Networks}}{{$k}} {{end}}' | grep microservices-overlay
+   ```
+
+3. **Update verify-deployment.sh to test actual routing**
+   - Not just container status
+   - Test HTTP/HTTPS through Traefik proxy
+
+4. **Add network requirements to infrastructure documentation**
+
+### Lessons Learned
+
+1. **Container "healthy" ≠ Service accessible**: Internal healthchecks don't verify external connectivity
+2. **Manual fixes are temporary**: Always update configuration files, not just running containers
+3. **Network configuration is critical**: Docker network isolation can silently break routing
+4. **Restart = Loss of manual changes**: Manual network connections don't survive restarts
+5. **Verify after every change**: Restarting for one fix can break something else
+
+### Updated Root Causes Summary
+
+All five root causes from today's incidents:
+
+1. ✅ **Environment Variable Not Set** - `${ACME_EMAIL}` not expanded
+2. ✅ **DNS Mismatch** - Domains point to wrong server (106.70.161.3 vs 10.0.0.84)
+3. ✅ **Rate Limiting** - Let's Encrypt production limits hit
+4. ✅ **YAML Syntax Error** - sed command malformed configuration
+5. ✅ **Network Isolation** - Traefik not connected to backend network
+
+All incidents resolved. Configuration changes committed to prevent recurrence.
+
+---
+
 **Prepared by**: Claude Agent
 **Review Date**: December 30, 2025
+**Last Incident**: 10:45 UTC - Network connectivity resolved
 **Next Review**: After DNS strategy implementation
