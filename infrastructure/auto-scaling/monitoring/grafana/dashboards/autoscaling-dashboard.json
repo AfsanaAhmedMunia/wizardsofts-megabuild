@@ -473,5 +473,6 @@
     "uid": "autoscaling-platform",
     "version": 1,
     "weekStart": ""
-  }
+  },
+  "overwrite": true
 }
