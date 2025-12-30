@@ -44,7 +44,20 @@ All contributors and automation (including Copilot) must adhere to the following
     - Regularly audit Docker Compose files, images, and running containers.
     - Remove unused containers, images, and volumes.
 
+## Authentication and Authorization
+
+11. **Keycloak as Central Identity Provider**
+    - **Keycloak MUST be used** as the central authentication provider for ALL administrative interfaces.
+    - Single Sign-On (SSO) is REQUIRED for all admin services.
+    - Supported authentication methods:
+      - Native OIDC/OAuth2 integration (preferred)
+      - Traefik Forward Auth via OAuth2 Proxy (for services without native OIDC)
+    - User: `mashfiqur.rahman` must have administrative access to all services.
+    - Multi-Factor Authentication (MFA) should be enabled for administrative accounts.
+    - Session timeouts and security policies are managed centrally in Keycloak.
+
 ## Enforcement
 
 - All PRs and automated changes must be reviewed for compliance with this checklist.
 - Copilot and other AI agents must reference this constitution and the checklist in `.github/copilot-instructions.md` for all code and config changes.
+- **NEW SERVICES**: Any new administrative interface MUST integrate with Keycloak for authentication before deployment.

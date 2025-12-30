@@ -99,3 +99,6 @@ temp/
 # MCP and AI tooling
 .playwright-mcp/
 .serena/
+
+# Duplicate cleanup script checkpoint
+cleanup_checkpoint.json

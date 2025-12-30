@@ -253,7 +253,7 @@ services:
       - '--web.console.libraries=/usr/share/prometheus/console_libraries'
       - '--web.console.templates=/usr/share/prometheus/consoles'
     ports:
-      - "9090:9090"
+      - "127.0.0.1:9090:9090"  # Localhost-only access
     volumes:
       - ./infrastructure/auto-scaling/prometheus:/etc/prometheus
       - prometheus-data:/prometheus
@@ -276,10 +276,29 @@ services:
     profiles: ["infrastructure", "monitoring", "all"]
     container_name: grafana
     ports:
-      - "3000:3000"
+      - "0.0.0.0:3002:3000"  # Network-accessible on port 3002 for SSO testing
     environment:
+      # Server Configuration
+      - GF_SERVER_ROOT_URL=http://10.0.0.84:3002
+      - GF_SERVER_HTTP_PORT=3000
+
+      # Admin Configuration
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-W1z4rdS0fts!2025}
       - GF_INSTALL_PLUGINS=grafana-clock-panel
+
+      # Keycloak OIDC Configuration
+      - GF_AUTH_GENERIC_OAUTH_ENABLED=true
+      - GF_AUTH_GENERIC_OAUTH_NAME=Keycloak
+      - GF_AUTH_GENERIC_OAUTH_CLIENT_ID=grafana
+      - GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET=pBgf51lo7FQ7RgYL23WhoFIz4C9XJmv1
+      - GF_AUTH_GENERIC_OAUTH_SCOPES=openid profile email roles
+      - GF_AUTH_GENERIC_OAUTH_AUTH_URL=http://10.0.0.84:8180/realms/wizardsofts-admin/protocol/openid-connect/auth
+      - GF_AUTH_GENERIC_OAUTH_TOKEN_URL=http://10.0.0.84:8180/realms/wizardsofts-admin/protocol/openid-connect/token
+      - GF_AUTH_GENERIC_OAUTH_API_URL=http://10.0.0.84:8180/realms/wizardsofts-admin/protocol/openid-connect/userinfo
+      - GF_AUTH_GENERIC_OAUTH_ALLOW_SIGN_UP=true
+      - GF_AUTH_GENERIC_OAUTH_ROLE_ATTRIBUTE_PATH=contains(roles[*], 'admin') && 'Admin' || 'Viewer'
+      - GF_AUTH_GENERIC_OAUTH_ROLE_ATTRIBUTE_STRICT=false
+      - GF_AUTH_GENERIC_OAUTH_USE_PKCE=true
     volumes:
       - grafana-data:/var/lib/grafana
       - ./infrastructure/auto-scaling/grafana:/etc/grafana/provisioning

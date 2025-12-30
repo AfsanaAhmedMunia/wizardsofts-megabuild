@@ -20,7 +20,7 @@ services:
     command: start-dev
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8180:8080"  # Localhost-only access (use Traefik for external)
+      - "8180:8080"  # Accessible from private networks (protected by UFW)  # Localhost-only access (use Traefik for external)
     environment:
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
