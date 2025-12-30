@@ -185,8 +185,42 @@ Before marking any deployment task as complete:
 - [ ] Health checks returning 200 OK
 - [ ] Services accessible via DNS
 - [ ] Admin interfaces protected by Keycloak SSO
+- [ ] **HTTPS/SSL verification**: Certificate valid and secure connection working
 - [ ] Logs show no errors
 - [ ] Metrics being collected (if Prometheus enabled)
+
+#### HTTPS/SSL Verification Steps
+
+**CRITICAL**: After every web application deployment, MUST verify HTTPS is working correctly:
+
+```bash
+# 1. Check certificate validity
+openssl s_client -connect www.wizardsofts.com:443 -servername www.wizardsofts.com 2>/dev/null | openssl x509 -noout -dates
+
+# 2. Verify HTTPS connection (should NOT show "not secure")
+curl -I https://www.wizardsofts.com 2>&1 | grep -E "HTTP|SSL"
+
+# 3. Check certificate issuer (should be Let's Encrypt or valid CA)
+openssl s_client -connect www.wizardsofts.com:443 -servername www.wizardsofts.com 2>/dev/null | openssl x509 -noout -issuer
+
+# 4. Test all deployed routes
+curl -I https://www.wizardsofts.com/bondwala
+curl -I https://www.gibd.wizardsofts.com
+curl -I https://www.padmafoods.com
+```
+
+**Common Issues**:
+- **Self-signed certificate**: Traefik Let's Encrypt not configured or domain not resolving
+- **Certificate expired**: Let's Encrypt renewal failed
+- **Mixed content warnings**: Some assets loading over HTTP instead of HTTPS
+- **Wrong domain in certificate**: SNI configuration issue in Traefik
+
+**Fix Process**:
+1. Check Traefik configuration for Let's Encrypt settings
+2. Verify domain DNS resolves to correct IP address
+3. Check Traefik logs: `docker logs traefik 2>&1 | grep -i "acme\|certificate"`
+4. Ensure ports 80 and 443 are accessible for ACME challenge
+5. Force certificate renewal if needed: Delete Traefik acme.json and restart
 
 ---
 
