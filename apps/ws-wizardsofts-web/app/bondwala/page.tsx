@@ -1,10 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 
 export default function BondWalaPage() {
   const [openFaqs, setOpenFaqs] = useState<number[]>([]);
+  const [launchDate, setLaunchDate] = useState<string>("");
+
+  useEffect(() => {
+    // Calculate 7 days from now
+    const now = new Date();
+    const launch = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+    // Format as "Month Day, Year" (e.g., "January 5, 2026")
+    const formatted = launch.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+
+    setLaunchDate(formatted);
+  }, []);
 
   const toggleFaq = (index: number) => {
     setOpenFaqs((prev) =>
@@ -80,12 +96,9 @@ export default function BondWalaPage() {
               bonds stay private on your device.
             </p>
             <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:justify-center">
-              <a
-                href="#download"
-                className="inline-block rounded-md bg-white px-8 py-3 font-semibold text-primary hover:bg-gray-100 transition-colors"
-              >
-                Download Now
-              </a>
+              <div className="inline-block rounded-md bg-white px-8 py-3 font-semibold text-primary">
+                Coming Soon - {launchDate || "January 2026"}
+              </div>
               <a
                 href="#how-it-works"
                 className="inline-block rounded-md border-2 border-white px-8 py-3 font-semibold text-white hover:bg-white/10 transition-colors"
@@ -270,16 +283,23 @@ export default function BondWalaPage() {
         </div>
       </section>
 
-      {/* Download Section */}
+      {/* Coming Soon Section */}
       <section id="download" className="py-20">
         <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-            Download BondWala Now
+            Coming Soon
           </h2>
           <p className="mt-4 text-lg text-gray-600">
-            Available on iOS and Android. Download free from your app store.
+            BondWala will be available on iOS and Android starting {launchDate || "soon"}.
           </p>
 
+          <div className="mt-8 inline-block rounded-lg bg-gradient-to-r from-primary/10 to-primary/5 px-12 py-8 border-2 border-primary/20">
+            <div className="text-sm font-medium text-gray-600 uppercase tracking-wide">Expected Launch Date</div>
+            <div className="mt-2 text-4xl font-bold text-primary">{launchDate || "Coming Soon"}</div>
+            <div className="mt-4 text-gray-600">Stay tuned for updates!</div>
+          </div>
+
+          {/* Download links hidden until release
           <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:justify-center">
             <a
               href="https://play.google.com/store"
@@ -300,7 +320,7 @@ export default function BondWalaPage() {
               <div>App Store</div>
             </a>
           </div>
-
+          -->
 
         </div>
       </section>
