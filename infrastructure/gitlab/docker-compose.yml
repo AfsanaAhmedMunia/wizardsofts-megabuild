@@ -1,6 +1,6 @@
 services:
   gitlab:
-    image: gitlab/gitlab-ce:latest
+    image: gitlab/gitlab-ce:18.4.1-ce.0
     container_name: gitlab
     restart: always
     hostname: '10.0.0.84'
@@ -22,8 +22,8 @@ services:
         gitlab_rails['redis_host'] = 'gibd-redis'
         gitlab_rails['redis_port'] = 6379
     ports:
-      - '8090:80'
-      - '8443:443'
+      - '8090:8090'
+      - '8443:8443'
       - '2222:22'
       - '5050:5050'
     volumes:
