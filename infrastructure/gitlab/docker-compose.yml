@@ -3,11 +3,11 @@ services:
     image: gitlab/gitlab-ce:latest
     container_name: gitlab
     restart: always
-    hostname: '10.0.0.80'
+    hostname: '10.0.0.84'
     environment:
       GITLAB_OMNIBUS_CONFIG: |
-        external_url 'http://10.0.0.80'
-        registry_external_url 'http://10.0.0.80:5050'
+        external_url 'http://10.0.0.84:8090'
+        registry_external_url 'http://10.0.0.84:5050'
         gitlab_rails['registry_enabled'] = true
         gitlab_rails['gitlab_shell_ssh_port'] = 2222
         postgresql['enable'] = false
@@ -22,8 +22,8 @@ services:
         gitlab_rails['redis_host'] = 'gibd-redis'
         gitlab_rails['redis_port'] = 6379
     ports:
-      - '80:80'
-      - '443:443'
+      - '8090:80'
+      - '8443:443'
       - '2222:22'
       - '5050:5050'
     volumes:
