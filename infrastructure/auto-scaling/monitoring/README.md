@@ -153,6 +153,30 @@ docker exec grafana wget -O- http://prometheus:9090/-/healthy
 - Check Grafana logs for configuration errors
 - Verify the dashboard JSON is valid
 
+## Validation
+
+Run the automated validation script to verify all components:
+```bash
+bash monitoring/validate-grafana.sh
+```
+
+This checks:
+- Container health status
+- API endpoints
+- Authentication
+- Datasources
+- Dashboards
+- Prometheus connectivity
+- Keycloak OAuth integration
+- Network connectivity
+
+## Additional Documentation
+
+- **[DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)** - Complete deployment instructions and troubleshooting
+- **[Retrospective](../../GRAFANA_DEPLOYMENT_RETROSPECTIVE.md)** - Lessons learned from production deployment
+- **[Infrastructure Principles](../../infrastructure/INFRASTRUCTURE_PRINCIPLES.md)** - General infrastructure best practices
+- **[Deployment Complete](../../GRAFANA_DEPLOYMENT_COMPLETE.md)** - Current system status and access info
+
 ## Next Steps
 
 1. Configure alert notification channels (Email, Slack, etc.)
