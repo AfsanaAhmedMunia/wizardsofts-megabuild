@@ -17,7 +17,7 @@ services:
       - N8N_METRICS=false
       - N8N_DIAGNOSTICS_ENABLED=false
       - N8N_PROTOCOL=http
-      - N8N_HOST=10.0.0.80
+      - N8N_HOST=10.0.0.84
       - N8N_PUBLIC_URL=https://c52803ae2c1c.ngrok-free.app
       - WEBHOOK_URL=https://c52803ae2c1c.ngrok-free.app
     volumes:
