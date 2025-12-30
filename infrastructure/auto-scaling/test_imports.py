@@ -89,7 +89,7 @@ def test_config_model():
     )
     
     server = ServerConfig(
-        host="10.0.0.80",
+        host="10.0.0.84",
         name="server1",
         ssh_user="test_user",
         ssh_port=22,

@@ -19,7 +19,7 @@ def test_server_config_validation():
     """Test server configuration validation"""
     # Valid config
     server = ServerConfig(
-        host="10.0.0.80",
+        host="10.0.0.84",
         name="server1",
         ssh_user="test_user",
         ssh_port=22,
@@ -27,13 +27,13 @@ def test_server_config_validation():
         max_containers=12,
         role="control"
     )
-    assert server.host == "10.0.0.80"
+    assert server.host == "10.0.0.84"
     assert server.max_containers == 12
     
     # Test invalid port
     with pytest.raises(ValidationError):
         ServerConfig(
-            host="10.0.0.80",
+            host="10.0.0.84",
             name="server1",
             ssh_user="test_user",
             ssh_port=99999,  # Invalid port
@@ -135,7 +135,7 @@ def test_config_model_validation():
     )
     
     server = ServerConfig(
-        host="10.0.0.80",
+        host="10.0.0.84",
         name="server1",
         ssh_user="test_user",
         ssh_port=22,
@@ -198,7 +198,7 @@ def test_threshold_validation():
     
     # Create a config with this service to trigger validation
     server = ServerConfig(
-        host="10.0.0.80",
+        host="10.0.0.84",
         name="server1",
         ssh_user="test_user",
         ssh_port=22,
@@ -244,7 +244,7 @@ load_balancer:
   stats_port: 8404
 
 servers:
-  - host: 10.0.0.80
+  - host: 10.0.0.84
     name: server1
     ssh_user: wizardsofts
     ssh_port: 22
@@ -326,7 +326,7 @@ load_balancer:
   stats_port: 8404
 
 servers:
-  - host: 10.0.0.80
+  - host: 10.0.0.84
     name: server1
     ssh_user: wizardsofts
     ssh_port: 22
