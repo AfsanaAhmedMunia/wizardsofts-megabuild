@@ -285,6 +285,25 @@ mvn test
 - Critical paths: 90%
 - Integration tests: Required for all API endpoints
 
+### E2E Testing Mandate
+
+**CRITICAL RULE**: All agents MUST complete and pass relevant end-to-end/integration tests before proceeding to subsequent development phases.
+
+**Requirements**:
+1. ✅ **Run Tests First**: Before implementing next feature or moving to new task, verify all relevant e2e/integration tests pass
+2. ✅ **Complete Pipelines**: For data pipelines, ML models, or business logic, test the complete workflow from data input to final output
+3. ⚠️ **Pause on Failure**: If tests fail or cannot run due to missing infrastructure/data, development MUST pause
+4. 🚩 **Raise Flags**: Document and report to user any:
+   - Business requirement conflicts discovered during testing
+   - Infrastructure limitations preventing test execution
+   - Data quality issues affecting test reliability
+5. 📝 **Document Results**: Log test results, including any skipped tests with clear reasons
+
+**Example Workflow**:
+- Implement feature → Write tests → Run tests → Verify all pass → Document → Proceed
+- If tests fail → Debug → Fix → Retest → Only proceed when passing
+- If infrastructure missing → Report to user → Wait for resolution → Retest → Proceed
+
 ---
 
 ## 🤖 AI Agent Behavior

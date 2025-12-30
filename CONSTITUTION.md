@@ -311,6 +311,13 @@ pytest tests/integration/
 - [ ] Daily Deen Guide: Prayer times, hadith content
 - [ ] Quant-Flow: Signal generation, NLQ queries, company pages
 
+**CRITICAL: E2E Testing Mandate for Development Workflow**:
+- ✅ **Mandatory**: All agents MUST run and pass relevant e2e/integration tests before proceeding to next development phase
+- ✅ **Scope**: For features involving data pipelines, models, or business logic, integration tests validating the complete workflow are required
+- ✅ **Enforcement**: If e2e tests fail or cannot run due to missing data/infrastructure, development MUST pause until issues are resolved
+- ⚠️ **Flag Requirement**: If testing reveals business requirement conflicts or infrastructure limitations, agent MUST raise flags to user before proceeding
+- 📝 **Documentation**: Test results and any skipped tests MUST be documented with clear reasons
+
 ---
 
 ### Performance Tests

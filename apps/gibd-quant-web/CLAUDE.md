@@ -134,6 +134,28 @@ npm run lint
 - Integration tests: Required for API integrations
 - Tests MUST pass before deployment
 
+**E2E Testing Mandate (CRITICAL)**:
+- ✅ **All agents MUST run and pass relevant end-to-end/integration tests** before proceeding to next phase
+- ✅ **For features involving backend integration**: Test complete workflow from UI → API → response
+- ⚠️ **If tests fail or cannot run**: Development MUST pause, report to user
+- 📝 **Document**: Test results, skipped tests (with reasons), any infrastructure issues
+- 🚩 **Raise flags**: Business requirement conflicts, API integration issues, deployment blockers
+
+**Example E2E Test Flow**:
+```bash
+# Run integration tests
+npm test
+
+# Test with actual backend services (if available)
+npm run test:e2e
+
+# Verify:
+# - Component rendering
+# - API calls succeed
+# - Data displays correctly
+# - Error handling works
+```
+
 ## 🌐 Backend Services Integration
 
 This frontend connects to:
