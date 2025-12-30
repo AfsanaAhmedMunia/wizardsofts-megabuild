@@ -754,14 +754,6 @@ services:
     container_name: appwrite-mariadb
     <<: *x-logging
     restart: unless-stopped
-    user: "999:999"
-    security_opt:
-      - no-new-privileges:true
-    cap_drop:
-      - ALL
-    cap_add:
-      - CHOWN
-      - DAC_OVERRIDE
     networks:
       - appwrite
     volumes:
@@ -809,14 +801,6 @@ services:
     container_name: appwrite-redis
     <<: *x-logging
     restart: unless-stopped
-    user: "999:999"
-    security_opt:
-      - no-new-privileges:true
-    cap_drop:
-      - ALL
-    cap_add:
-      - CHOWN
-      - DAC_OVERRIDE
     networks:
       - appwrite
     command: >
