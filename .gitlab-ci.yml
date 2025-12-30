@@ -2,10 +2,13 @@
 # Deploys to 10.0.0.84 server using GitLab Runner
 
 stages:
+  - validate
   - detect
   - test
   - build
+  - pre-deploy
   - deploy
+  - verify
 
 variables:
   # Deployment server
@@ -24,6 +27,25 @@ cache:
   paths:
     - .m2/repository/
     - .cache/pip/
+
+# ============================================================================
+# VALIDATE STAGE - Validate configurations before deployment
+# ============================================================================
+
+validate-config:
+  stage: validate
+  image: python:3.11-slim
+  before_script:
+    - apt-get update && apt-get install -y docker-compose curl
+    - pip install pyyaml
+  script:
+    - chmod +x scripts/validate-config.sh
+    - ./scripts/validate-config.sh --strict
+  only:
+    - main
+    - master
+    - develop
+    - merge_requests
 
 # ============================================================================
 # DETECT CHANGES - Determine which services need to be rebuilt
@@ -220,6 +242,32 @@ build-images:
     - main
     - master
     - develop
+
+# ============================================================================
+# PRE-DEPLOY STAGE - Backup and prepare for deployment
+# ============================================================================
+
+pre-deploy-backup:
+  stage: pre-deploy
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache openssh-client bash
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - ssh-keyscan -H $DEPLOY_HOST >> ~/.ssh/known_hosts
+  script:
+    - chmod +x scripts/pre-deploy.sh
+    - ./scripts/pre-deploy.sh $DEPLOY_HOST all
+  dependencies:
+    - build-images
+  environment:
+    name: production
+  when: manual
+  only:
+    - main
+    - master
 
 # ============================================================================
 # DEPLOY STAGE - Deploy to 10.0.0.84 server
@@ -509,6 +557,52 @@ health-check:
       echo "All health checks passed!"
   dependencies:
     - deploy-to-84
+  when: on_success
+  only:
+    - main
+    - master
+
+# ============================================================================
+# VERIFY STAGE - Comprehensive deployment verification
+# ============================================================================
+
+verify-deployment:
+  stage: verify
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache openssh-client bash curl openssl docker-cli
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - ssh-keyscan -H $DEPLOY_HOST >> ~/.ssh/known_hosts
+  script:
+    - chmod +x scripts/verify-deployment.sh
+    - ./scripts/verify-deployment.sh $DEPLOY_HOST --skip-https
+  after_script:
+    - |
+      echo ""
+      echo "============================================"
+      echo "  HTTPS Verification Required"
+      echo "============================================"
+      echo ""
+      echo "CRITICAL: Manually verify HTTPS certificates:"
+      echo ""
+      echo "For each domain, run:"
+      echo "  openssl s_client -connect <domain>:443 -servername <domain> 2>/dev/null | openssl x509 -noout -dates"
+      echo "  curl -I https://<domain>"
+      echo ""
+      echo "Domains to check:"
+      echo "  - www.wizardsofts.com"
+      echo "  - www.mypadmafoods.com"
+      echo "  - www.guardianinvestmentbd.com"
+      echo ""
+      echo "See AGENT_GUIDELINES.md for full verification steps"
+      echo "============================================"
+  dependencies:
+    - deploy-to-84
+  environment:
+    name: production
   when: on_success
   only:
     - main
