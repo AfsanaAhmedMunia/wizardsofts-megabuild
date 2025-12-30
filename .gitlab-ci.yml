@@ -385,7 +385,7 @@ deploy-web-apps:
 
       # Deploy each web app
       for service in ws-wizardsofts-web ws-daily-deen-web pf-padmafoods-web gibd-quant-web; do
-        if [ -d "/home/wizardsofts/apps/$service" ]; then
+        if [ -d "/home/wizardsofts/apps/$service" ] && [ -f "/home/wizardsofts/apps/$service/docker-compose.yml" ]; then
           echo "Deploying $service..."
           cd /home/wizardsofts/apps/$service
 
@@ -400,6 +400,8 @@ deploy-web-apps:
 
           # Return to base directory
           cd /home/wizardsofts/apps
+        else
+          echo "Skipping $service - docker-compose.yml not found (nested repo not initialized)"
         fi
       done
 
