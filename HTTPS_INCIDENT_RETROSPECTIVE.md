@@ -65,6 +65,14 @@
 - ✅ All websites operational
 - ❌ HTTPS certificates still failing (DNS/rate limit issues)
 
+### 09:50 UTC - HTTPS Temporary Fix Implemented
+- Switched Traefik to Let's Encrypt **staging server**
+- Configuration updated: `caServer: https://acme-staging-v02.api.letsencrypt.org/directory`
+- Staging certificates being issued successfully
+- **Status**: Browsers show "not secure" (expected for staging certs)
+- Created comprehensive DNS strategy document: [DNS_HTTPS_STRATEGY.md](DNS_HTTPS_STRATEGY.md)
+- **Action Required**: User must choose DNS strategy (Option A or B)
+
 ---
 
 ## Root Causes Identified
@@ -180,8 +188,9 @@
 
 - [x] Restore Traefik to operational state
 - [x] Document incident in retrospective
-- [ ] **Decide DNS strategy** - staging subdomains vs other approach
-- [ ] **Fix HTTPS certificates** once rate limit expires or DNS fixed
+- [x] **Implement temporary fix** - switched to Let's Encrypt staging server
+- [ ] **Decide DNS strategy** - staging subdomains vs production DNS (see DNS_HTTPS_STRATEGY.md)
+- [ ] **Fix HTTPS certificates permanently** - implement chosen DNS strategy
 
 ### Short-term (High Priority)
 
@@ -362,10 +371,35 @@ This incident highlighted the critical importance of:
 
 The emergency was resolved quickly due to having backups and SSH access, but the incident could have been prevented entirely with better validation and staging practices.
 
-**Status**: Websites operational, HTTPS issue requires DNS strategy decision.
+**Status**: Websites operational, HTTPS temporarily fixed with staging certificates.
+
+---
+
+## Temporary Fix Implementation (December 30, 2025 - 09:50 UTC)
+
+### What Was Done
+1. ✅ Switched Traefik to Let's Encrypt staging server
+2. ✅ Updated traefik.yml with `caServer: https://acme-staging-v02.api.letsencrypt.org/directory`
+3. ✅ Added acme.json volume mount to docker-compose.yml
+4. ✅ Restarted Traefik successfully
+5. ✅ Verified staging certificates being issued
+6. ✅ Created [DNS_HTTPS_STRATEGY.md](DNS_HTTPS_STRATEGY.md) with options
+
+### Current State
+- ✅ All websites accessible via HTTP and HTTPS
+- ⚠️ Browsers show "not secure" (expected for staging certs)
+- ✅ No rate limits (staging server has no limits)
+- ✅ Traefik healthy: `OK: http://:8080/ping`
+
+### Permanent Fix Required
+**User must choose DNS strategy**:
+- **Option A**: Staging subdomains (dev.wizardsofts.com → 10.0.0.84) ← Recommended
+- **Option B**: Point production DNS to 10.0.0.84 (if 106.70.161.3 not in use)
+
+See [DNS_HTTPS_STRATEGY.md](DNS_HTTPS_STRATEGY.md) for complete details and implementation steps.
 
 ---
 
 **Prepared by**: Claude Agent
 **Review Date**: December 30, 2025
-**Next Review**: After HTTPS issue resolution
+**Next Review**: After DNS strategy implementation
